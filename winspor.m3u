@@ -1,0 +1,7 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="WinSports.co" tvg-name="Win Sports" group-title="Deportes",Win Sports
+http://aioplus.es:80/live/Grower24/Grower24/1.ts
+#EXTINF:-1 tvg-id="WinSportsPlus.co" tvg-name="Win Sports+" group-title="Deportes",Win Sports+
+http://aioplus.es:80/live/Grower24/Grower24/2.ts
+#EXTINF:-1 tvg-id="WinSports2.co" tvg-name="Win Sports 2" group-title="Deportes",Win Sports 2
+http://aioplus.es:80/live/Grower24/Grower24/3.ts
