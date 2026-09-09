@@ -1,0 +1,1741 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milenio - Catálogo VOD y Series</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Roboto', sans-serif; background-color: #0b0f19; color: #f8fafc; margin: 0; padding: 0; }
+        
+        header { height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #111827; border-bottom: 1px solid #263244; }
+        header strong { color: #38bdf8; font-size: 18px; }
+        
+        .menu-buttons { display: flex; gap: 10px; }
+        button { border: 0; border-radius: 8px; padding: 8px 14px; background: #1f2937; color: #fff; font-weight: 700; cursor: pointer; }
+        button.active { background: #0284c7; }
+
+        /* Contenedor del Reproductor Integrado */
+        .player-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            display: none;
+        }
+        video {
+            width: 100%;
+            max-height: 500px;
+            display: block;
+            background: #000;
+        }
+        .player-info {
+            padding: 12px 20px;
+            background: #1e293b;
+            font-size: 15px;
+            font-weight: 500;
+            color: #38bdf8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-player {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .close-player:hover { background: #dc2626; }
+
+        .controls { display: flex; justify-content: center; gap: 15px; margin: 20px 0; flex-wrap: wrap; padding: 0 20px; }
+        input, select { padding: 10px 15px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 14px; width: 300px; max-width: 100%; }
+        
+        .vod-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto 40px auto; padding: 0 20px; }
+        .vod-card { background: #1e293b; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.4); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; display: flex; flex-direction: column; position: relative; }
+        .vod-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(56, 189, 248, 0.2); }
+        
+        .vod-number {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(2, 132, 199, 0.9);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .vod-poster { width: 100%; height: 260px; object-fit: cover; background: #334155; }
+        .vod-info { padding: 12px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
+        .vod-title { font-size: 13px; font-weight: 600; margin: 0 0 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .vod-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+        .vod-badge { padding: 2px 6px; font-size: 10px; font-weight: bold; background: #0284c7; color: white; border-radius: 4px; }
+        .vod-genre { font-size: 11px; color: #94a3b8; }
+
+        /* Estilos del Modal de Episodios */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+        }
+        .modal-content {
+            background: #111827; border: 1px solid #334155; width: 100%; max-width: 700px;
+            max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .modal-header { padding: 15px 20px; background: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { margin: 0; color: #38bdf8; font-size: 16px; }
+        .modal-body { padding: 20px; overflow-y: auto; }
+        .episode-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .episode-item {
+            display: flex; align-items: center; gap: 15px; background: #1e293b; padding: 10px;
+            border-radius: 6px; cursor: pointer; transition: background 0.2s; border: 1px solid transparent;
+        }
+        .episode-item:hover { background: #334155; border-color: #0284c7; }
+        .episode-thumb { width: 100px; height: 60px; object-fit: cover; border-radius: 4px; background: #000; }
+        .episode-details h4 { margin: 0 0 5px 0; font-size: 14px; color: #f8fafc; }
+        .episode-details span { font-size: 12px; color: #38bdf8; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <strong>MILENIO VOD & SERIES</strong>
+        <div class="menu-buttons">
+            <button id="moviesBtn" class="active" onclick="cambiarSeccion('peliculas')">Películas</button>
+            <button id="seriesBtn" onclick="cambiarSeccion('series')">Series</button>
+        </div>
+    </header>
+
+    <!-- Reproductor HTML5 -->
+    <div id="playerContainer" class="player-container">
+        <div class="player-info">
+            <span id="nowPlayingTitle">Reproduciendo: -</span>
+            <button class="close-player" onclick="cerrarReproductor()">Cerrar Reproductor</button>
+        </div>
+        <video id="videoPlayer" controls autoplay></video>
+    </div>
+
+    <!-- Modal para Listar Episodios de la Temporada -->
+    <div id="seriesModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalSeriesTitle">Lista de Episodios</h3>
+                <button class="close-player" onclick="cerrarModal()">Cerrar</button>
+            </div>
+            <div class="modal-body">
+                <div id="episodesContainer" class="episode-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Buscar..." onkeyup="filtrarContenido()">
+        <select id="genreSelect" onchange="filtrarContenido()">
+            <option value="">Todas las categorías</option>
+            <option value="Acción">Acción</option>
+            <option value="Animación">Animación</option>
+            <option value="Ciencia Ficción">Ciencia Ficción</option>
+            <option value="Drama">Drama</option>
+        </select>
+    </div>
+
+    <div id="vod-grid" class="vod-container"></div>
+
+    <script>
+        // Catálogo de Películas
+        const listaPeliculasVOD = [
+{
+    titulo: "La Era de Hielo 4",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/t8hn6m0sw8vx4ba55gx1o/4-la-era-de-hielo.png?rlkey=zdm2d2dy8rqvf9040sdue25us&st=fr72ba9k&dl=1",
+    url: "https://www.dropbox.com/scl/fi/qdary602rfuh1dmi4kgzh/la-era-del-hielo-4-1080p-dual-7.33-gb.mkv?rlkey=0vhh2rb1o7gzrdvgfwqnmavti&st=rce0eorr&dl=1"
+},
+{
+    
+    titulo: "Lágrimas del Sol",
+    genero: "Acción",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/xp31lljghfx3lnpm5867q/l-grimas-del-sol.png?rlkey=nyu0pamxcr7jdmg14qattwt2a&st=dq2rsh8w&dl=1",
+    url: "https://www.dropbox.com/scl/fi/4m16i52cmbf0if14fe9q2/lagrimas-del-sol-1080p-2.51-gb.mkv?rlkey=f8m0zlxdxspfq5wbrdtbw9p1j&st=sspel4hn&dl=1"
+},
+{
+    titulo: "Los Croods",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/6afjre8znuf0bh7io7pev/los-croods.png?rlkey=fipshzm1maoj5pcz9byu5ip1c&st=gitbat7e&dl=1",
+    url: "https://www.dropbox.com/scl/fi/lt16oomnbe8f7ox465nui/los-croods-1080p-trial-6.91-gb.mkv?rlkey=t69na5k9jtm5jjjcdh8u4pnfo&raw=1"
+},
+{
+    titulo: "Transformers",
+    genero: "Acción",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/1xik00yznzbxwj89453li/Transformers.png?rlkey=uubie371o7f0j4pl477izl4wi&st=t5pdl4lc&dl=1",
+    url: "https://www.dropbox.com/scl/fi/6w8k0alvocgr186am5rwl/transformers-1-1080p-dual-6.77-gb.mkv?rlkey=3u9fmjo68x65ia55ndgdeij5y&raw=1"
+},
+{
+    titulo: "Ron da Error",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/029av0hn7a6neqmm5xvv1/ron-error.png?rlkey=gfhuow1u9hn9blq0swuom790e&st=utsy0p81&dl=1",
+    url: "https://www.dropbox.com/scl/fi/6iqozmy5jstn81ku4q6bv/ron-da-error-1080p-dual-3.16-gb.mkv?rlkey=bufmizual1t7wstbdmgz8i8jw&raw=1"
+},
+{
+    titulo: "Megamente contra el sindicato de Doom",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/ioykqd6vflgfyc83ovdge/megamente.png?rlkey=tvu5m3jgu0fo3l272ufy80wyz&st=zxp3r108&dl=1",
+    url: "https://www.dropbox.com/scl/fi/25yiw4xa0virhd9obp4qi/megamente-contra-el-sindicato-de-doom-1080p-dual-1.84-gb.mkv?rlkey=ubindpzm09d07ocnp1n77ul11&raw=1"
+},
+{
+    titulo: "El Rey Mono",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/3bgvp94267ipgl883een2/el-rey-mono.png?rlkey=24q2q22jmli84pte24dp2fnmt&st=7udxk2y9&dl=1",
+    url: "https://www.dropbox.com/scl/fi/8z2jndz91d6zz84af5wuy/el-rey-mono-1080p-dual-3.67-gb.mkv?rlkey=mq3bn5t66bvjbsk142lcp409d&raw=1"
+},
+{
+    titulo: "Megamente",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/ioykqd6vflgfyc83ovdge/megamente.png?rlkey=tvu5m3jgu0fo3l272ufy80wyz&st=zxp3r108&dl=1",
+    url: "https://www.dropbox.com/scl/fi/feqy4rvi5zt12w5wq7x6y/Megamind-1080p-DUAL-3.23-GB.mkv?rlkey=h8yw8y8il56od97bei94cls2e&raw=1"
+},
+{
+    titulo: "La Era de Hielo 4 (Alternativa)",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/p7qogt71zlw4qzge96u7k/la-era-de-hielo.png?rlkey=578d8owslwzm6b9ouihk91jox&st=xfwb3hbc&dl=1",
+    url: "https://www.dropbox.com/scl/fi/qrh6y25igzustwvp3orji/La-era-del-Hielo-4-60fps-LAT-7.86-GB.mkv?rlkey=23sshh7vk2ija8oo1p01akif7&raw=1"
+},
+{
+    titulo: "Espías con Disfraz",
+    genero: "Animación",
+    calidad: "4K",
+    poster: "https://www.dropbox.com/scl/fi/unecvwnm1wv9jv9111137/espia-con-difras.png?rlkey=4338egt47bs558cdf0w6aflgw&st=wzrgsvdm&dl=1",
+    url: "https://www.dropbox.com/scl/fi/qsxgk5ztgdxnhi4qbdvdp/Espias-con-disfraz-4K-5.53-GB.mkv?rlkey=u814723bb0imxwl1twkfrc2b0&raw=1"
+},
+{
+    titulo: "Robot Salvaje",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/tsxtdme414ds8vqr46l9e/robot-en-la-selva.png?rlkey=mgpowi9llj6fh8cewxye0mr25&st=bueaz7kt&dl=1",
+    url: "https://www.dropbox.com/scl/fi/58m762dp8p20lk4bz2e27/Robot-Salvaje-1080p-DUAL-3.50-GB.mkv?rlkey=9yueg7545z2ann55bbuh8nf79&raw=1"
+},
+{
+    titulo: "Los Caballeros",
+    genero: "Acción",
+    calidad: "720P",
+    poster: "https://www.dropbox.com/scl/fi/ocblwj9np9m71gb3b3ugo/los-caballeros.png?rlkey=nt8vafxmbw31fty344m63k84t&st=gl0l55k1&dl=1",
+    url: "https://www.dropbox.com/scl/fi/o4lq0fsqgfxfn8i55nhsd/Los-Caballeros-720p-1.39-GB.mkv?rlkey=vweglq7x6zqqd7i6crgniba1p&raw=1"
+},
+{
+    titulo: "Arctic Dogs",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/u661hey3bv9dhbz6lgqlj/Arctic-Dogs.png?rlkey=42cbedhxmlq7ji66421k772j2&st=tij8pbn2&dl=1",
+    url: "https://www.dropbox.com/scl/fi/qks2jnrc81pc0rz51vtds/Arctic-Dogs-1080p-LAT-2.25-GB.mkv?rlkey=pyjku7jgqgckmq63xmw6fyw30&raw=1"
+},
+{
+    titulo: "El Día Bajo Presión",
+    genero: "Acción",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/6n8ok49bry7eggx153m7y/file_000000003534820e833bd0f85a78531e.png?rlkey=gbnsmdsyj6yvqvoioni7c8cbf&st=puce48zi&dl=1",
+    url: "https://www.dropbox.com/scl/fi/9bsq4kok8r0229a1vs7eg/El-D-a-D-Bajo-presi-n-1080p-DUAL-3.53-GB.mkv?rlkey=3eab0svqf05rcybm59haannu2&raw=1"
+},
+{
+    titulo: "Happy Feet 2",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/mwn40fx2war38if7v0e1r/file_000000005f1c820e87e458f07fbeda42.png?rlkey=nv7ydv1o3tc8yt8m9vmxxewh5&st=4ox42pa0&dl=1",
+    url: "https://www.dropbox.com/scl/fi/pkyaz2ppsj1fsstisel77/Happy-Feet-2-LAT-1080p-2.65-GB.mkv?rlkey=a3c10boh0ccpaj5vv3jjkx10f&raw=1"
+},
+{
+    titulo: "Intensamente 2",
+    genero: "Animación",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/24dogib12hkfrjq1lv2ze/Intensamente-2.png?rlkey=r3ptf1mhgpdyyplqxf6vcm5fn&st=aswpn8qr&dl=1",
+    url: "https://www.dropbox.com/scl/fi/tji7msyxnxnbphwrww4k7/Inside-Out-2-2024-1080p-1080p-DUAL-3.41-GB.mkv?rlkey=r8hvmf19pfkaa8fq230fh4kvs&raw=1"
+},
+{
+    titulo: "8 minutos antes de morir",
+    genero: "Suspenso",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/ldntcab9e5gy0m0bh3auu/8-minutos-antes-de-morir.png?rlkey=znk0ob141rh0to3pmo1m034ic&st=e55ahdlm&dl=1",
+    url: "https://www.dropbox.com/scl/fi/89ani7znocgs6zk3ky723/8.minutos.antes.de.morir.2011.1080p-dual-lat.mkv?rlkey=28ym7fd699z7keb8pby7x8zz2&raw=1"
+},
+{
+    titulo: "El último guerrillero",
+    genero: "Acción",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/tgmu9ofdut3fxfxw8csgs/el-ultimo-guerrillero.png?rlkey=p2jl71hqbgxsqltrnn117h2bd&st=j044vke8&dl=1",
+    url: "https://www.dropbox.com/scl/fi/zfyujo1tihaygmk780j8d/el.-ltimo.guerrillero.2021.1080p-dual-lat.mkv?rlkey=bmy3ga7vhjj11h40bcufh71al&raw=1"
+},
+{
+    titulo: "Southpaw",
+    genero: "Drama",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/0p374y5vg498kaz49dwnq/southpaw.png?rlkey=vr2ra2npl3f0aaq7fzzks4yhk&st=xb4k950p&dl=1",
+    url: "https://www.dropbox.com/scl/fi/s4jzi8635nenn0pzmncxo/southpaw.2015.1080p-dual-lat.mp4?rlkey=mc7l6fh5bxtt9782hbk7mwc4y&raw=1"
+},
+{
+    titulo: "The Debt Collector",
+    genero: "Acción",
+    calidad: "1080P",
+    poster: "https://www.dropbox.com/scl/fi/fok996y8dw5kb0m8nfbvt/the.debt.collector.png?rlkey=18jd5pypcu0pqvqlbnzn5ifuc&st=8xrqzpq1&dl=1",
+    url: "https://www.dropbox.com/scl/fi/i2epwe2z08mtl2wnklh71/the.debt.collector.2026.1080p-dual-lat.mkv?rlkey=lx1t1e102pne7hwle041a27fl&raw=1"
+             },
+             {
+
+                titulo: "Carretera Mortal (2018)",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/is2tz045b18decjileiy3/carretera_mortal.png?rlkey=lzyqlqyj17pqj4376s1dctxgw&st=z7pdwhzo&dl=1",
+                url: "https://www.dropbox.com/scl/fi/c3i9xda0ntp69ooa8zzu6/Carretera.Mortal.2018.1080P-Dual-Lat.mkv?rlkey=jwcuuyl5i61bzd72xqys1s9q1&st=745di1jm&raw=1"
+            },
+            {
+                titulo: "¿Dónde está Noé?",
+genero: "Drama",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/qp2sbtd1me3zt7ezcvcle/donde-esta-noe.png?rlkey=c9n065tgb3e7u95j5wb9eq9pi&st=v96ff5lz&dl=1",
+url: "https://www.dropbox.com/scl/fi/pdd0zw5plsxpxxa3g6u6v/Ups-Donde-esta-Noe-1080p-3.15-GB.mkv?rlkey=vx2oesw7chngvavzo41l2xqhj&st=c4ltsgk0&raw=1"
+            },
+            {
+              
+titulo: "Intensa-Mente",
+genero: "Animación",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/szahpepag2zl3gflr106l/intensa-mente.png?rlkey=7p5a86mkd90qgmapc94lm3m3s&st=i3dpp1cz&dl=1",
+url: "https://www.dropbox.com/scl/fi/kox7rgg0ps37au1flrlt2/Intensa-Mente-60fps-DUAL-3.11-GB.mkv?rlkey=nifo7ehxdwwqp90rwcaiuewu8&raw=1"
+            },
+            {
+              
+titulo: "Todopoderoso 2",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/jdnn84vteb91mhuk2azxs/todopoderoso-2.png?rlkey=2xvm4g3vvbwzmfxpjtpdcnvfw&st=dec3g5rr&dl=1",
+url: "https://www.dropbox.com/scl/fi/ezkka346ng6doecq3b71y/Todopoderoso-2-1080p-LAT-2.37-GB.mkv?rlkey=tw65g6ovg4t7t9hcwf7uw1smv&raw=1"
+            },
+            {
+              
+titulo: "Los Croods 2: Una Nueva Era",
+genero: "Animación",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/0nvoh10gix4aprjwjfy00/croods-2.png?rlkey=rxgpf2f57pc1ubxf781tg1exj&st=5xtbuyxk&dl=1",
+url: "https://www.dropbox.com/scl/fi/x7fqczhc92k5wacs684qt/Los-Croods-2-Una-Nueva-Era-1080p-DUAL-9.85-GB.mkv?rlkey=3fya6uby0hhbv7y83fxu489zv&raw=1"
+            },
+            {
+              
+titulo: "Los dioses deben estar locos",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/qzf43p5sa2iugcckvnql1/los-dioses-est-n-locos.png?rlkey=dy05f8ye3t9bfw0s6d3yg8ev6&st=3wu7l5f0&dl=1",
+url: "https://www.dropbox.com/scl/fi/ws7mpgtpa6xsf40zghr5t/Los-dioses-deben-estar-locos-1-1080p-TRIAL-3.05-GB.mkv?rlkey=ozemt663ezj3c6tbciqmduz43&raw=1"
+            },
+            {
+              
+titulo: "Los dioses deben estar locos 2",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/l773nqhob5r7nv9d68ie0/los-dioses-locos-2.png?rlkey=e24tiv1r2aq7fmrmygamkpbzt&st=2r8jkn68&dl=1",
+url: "https://www.dropbox.com/scl/fi/a57tsbb4fvq9z1zcw0i72/Los-dioses-deben-estar-locos-2-1080p-TRIAL-5.82-GB.mkv?rlkey=e5ilbvpzy2co0x05ags1v306h&raw=1"
+            },
+            {
+              
+titulo: "Río 2",
+genero: "Animación",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/anlknexc4qbcz7oih8zda/R-o-2.png?rlkey=598y4icmnnma8nsoh3ooe9pto&st=vdz0g551&dl=1",
+url: "https://www.dropbox.com/scl/fi/7h4sdxfyv5ec0l1u7yub9/Rio-2-1080p-DUAL-3.47-GB.mkv?rlkey=twprkid8b8udpeuydwoxxtyao&raw=1"
+            },
+            {
+              
+titulo: "Río",
+genero: "Animación",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/fyd4shg9owsgqjqqm8bd1/RIO.png?rlkey=zl2qystzmqq7i3k7mg2p5kqwi&st=iefxk2li&dl=1",
+url: "https://www.dropbox.com/scl/fi/ijzt3lf9ymgxd3h5kxeu8/R-o-1080p-DUAL-3.10-GB.mkv?rlkey=9y9rnv3t71o8g5y9wcps63i8x&raw=1"
+            },
+            {
+              
+titulo: "Valiant",
+genero: "Animación",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/em6xmt2esew4iqjixcs4f/valiente.png?rlkey=8u33ko07jclxzcel8bdnsuvtr&st=r7uplzci&dl=1",
+url: "https://www.dropbox.com/scl/fi/smf8bl406nxq86maqkny6/Valiant-1080p-DUAL-2.73-GB.mkv?rlkey=fz6i3h2kpv1d817kkm407r0y8&raw=1"
+            },
+            {
+              
+titulo: "Son como niños 2",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/t77i16em0dcalkbvxawul/son-como-ni-os-2.png?rlkey=7zxh00n2cvjpf6lnshhkft2p8&st=5gowepcg&dl=1",
+url: "https://www.dropbox.com/scl/fi/vcdoaspkghfgb3b2ussmg/Son-como-ni-os-2-1080p-DUAL-3.66-GB.mkv?rlkey=0wc95rt0b3ophe53ud36qrrcx&raw=1"
+            },
+            {
+              
+titulo: "Son como niños",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/6sglzpnwo47z7fx1caqhh/son-c-mo-ni-o.png?rlkey=coszref13dip9x5ofc74zeqfp&st=5aie73wn&dl=1",
+url: "https://www.dropbox.com/scl/fi/ljgbz9mfx228f0bkrm1ab/Son-como-ni-os-1-1080p-DUAL-3.68-GB.mkv?rlkey=4y624nsj21bm4xch7dbcft7bv&raw=1"
+            },
+            {
+              
+titulo: "Superescuela de héroes",
+genero: "Acción",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/b4f2twor547tq9km2b9td/Sky-High.png?rlkey=s90x6exta1rye3n43iobt948n&st=imirmbg6&dl=1",
+url: "https://www.dropbox.com/scl/fi/cem872iqn4j1jbq9e09mv/Sky-High-1080p-LAT-1.98-GB.mp4?rlkey=ze0yd0o2wrxje2eqkn595wf9b&raw=1"
+            },
+            {
+              
+titulo: "Nuestra pandilla",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/lb39ctb9h6swf2id7kgk0/pandilla-1.png?rlkey=8o3s9nr3mp1yqno1c9r5te4d9&st=ct4hy4lp&dl=1",
+url: "https://www.dropbox.com/scl/fi/kdhska8rtdkfo762cg193/Nuestra-pandilla-1080p-DUAL-3.54-GB.mkv?rlkey=9ng65xw28lrk53ru0wexbabct&raw=1"
+            },
+            {
+              
+titulo: "Nuestra pandilla 2",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/3mfetomehfq48p1x3exyl/pandilla-2.png?rlkey=8ms86icwzpzmogs7jszrlned9&st=jcpijm2w&dl=1",
+url: "https://www.dropbox.com/scl/fi/kb5624i3g1xa6zed3mg9j/Nuestra-Pandilla-II-1080p-TRIAL-5.62-GB.mkv?rlkey=14wlm8rvd7y9a36ox6gst0v8i&raw=1"
+            },
+            {
+              
+titulo: "Nuestra pandilla 3",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/f63rwg8is93us69ifwub7/pandilla-3.png?rlkey=x70ih4mt8nvsgt6e60hymp511&st=oc4idjox&dl=1",
+url: "https://www.dropbox.com/scl/fi/dfd3ftxjbd2tb783c5eft/Nuestra-Pandilla-3-2007-1080p-TRIAL-6.42-GB.mkv?rlkey=3z39fmled6dt1ztltyotq56ew&raw=1"                        },
+            {
+              
+titulo: "Parque Mágico",
+genero: "Animación",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/r0nsrzs3xplgceih499cf/parque-m-gico.png?rlkey=y9tarp8o45verl1ejrn66s0sc&st=udfg08i3&dl=1",
+url: "https://www.dropbox.com/scl/fi/lc02e2ciz3su60c57jtta/Parque-M-gico-1080p-DUAL-1.37-GB.mp4?rlkey=v8241njmbsuajha3iom8d8y0w&raw=1"
+            },
+            {
+              
+titulo: "Golpe Bajo: El juego final",
+genero: "Comedia",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/gbcv93dutisil7ffq48k1/golpe-abajo.png?rlkey=l93x9int9j0jqkyg46qefe3ug&st=29eb2zz4&dl=1",
+url: "https://www.dropbox.com/scl/fi/efvje64dzm6j5ss88b2xp/Golpe-Abajo-1080p-DUAL-2.48-GB.mkv?rlkey=4f5c9yqc37lie87u5cfmgp8o7&raw=1"
+            },
+            {
+              
+titulo: "Gigantes de acero",
+genero: "Acción",
+calidad: "1080P",
+poster: "https://www.dropbox.com/scl/fi/ijnpf2l0woy27zmsunzye/gigante-de-acero.png?rlkey=6ufufskt42p8c9cidh5vqmgn5&st=mkckdglo&dl=1",
+url: "https://www.dropbox.com/scl/fi/fhqa3hynymmg5whkxwvv0/Gigantes-de-Acero-1080p-DUAL-4.68-GB.mkv?rlkey=kc3z4ucc6t3lasf6zwfwjo7tw&raw=1"
+            },
+            {
+
+               titulo: "El novato del año",
+               genero: "Comedia",
+               calidad: "1080P",
+               poster: "https://www.dropbox.com/scl/fi/m2fyoszg1g0gizo3yf4u2/el-novato-del-a-o.png?rlkey=4p04buikwxicppze1tbyyccg9&st=89jgh47b&dl=1",
+url: "https://www.dropbox.com/scl/fi/rpjzk43v6i48hx1rv4ojh/El-novato-del-a-o-1080p-DUAL-4.25-GB.mkv?rlkey=xikfe1skztqb3fejt56alq7tu&raw=1"
+            },
+            {
+              
+                titulo: "Entre Padres e Hijos (2026)",
+                genero: "Drama",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/jtee5aglc1oxbi20rl5b4/entre_padre_e_hijo.png?rlkey=5hiis47k1ry2ec8bi49gbj02q&st=oktjvsc6&dl=1",
+                url: "https://www.dropbox.com/scl/fi/88cm3o3iyfnn13vfvqqdv/Entre.Padres.E.Hijos.2026.1080P-Dual-Lat.mp4?rlkey=wyi5yp2y8xtf7x18hkm6docpm&st=rbuc8ttq&raw=1"
+            },
+            {
+                titulo: "Video Personal 2026",
+                genero: "Otros",
+                calidad: "HD",
+                poster: "https://via.placeholder.com/180x260?text=Video",
+                url: "https://www.dropbox.com/scl/fi/0jogp7h5mj8gkwub7case/VID_20260401_092444_752.mp4.mkv?rlkey=gjnmw6mn6zr6ct4d4ff9u8t1u&st=grae37lg&raw=1"
+            },
+            {
+                titulo: "Jet Li Acción",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/f56vlbgfk0uwbcd6p7n9r/jet_li_accion.png?rlkey=6we0bn3cwk77s2c0ikwezlpy8&st=r2zkn9tf&dl=1",
+                url: "https://www.dropbox.com/scl/fi/q7q98wmq5r4w3c2uu3npo/JET-LI-se-infiltr-en-una-peligrosa-banda-para-destruirla-desde-dentro-Pel-cula-de-Acci-n-1080P_HD.mp4?rlkey=60x080kn52u0tihr3y060zsod&st=sppy9pu9&raw=1"
+            },
+            {
+                titulo: "John Carter (2012)",
+                genero: "Ciencia Ficción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/0icxfar65zhc9wcu63bru/jhon_carter.png?rlkey=hbun35qyud7xbxr5kaaw0zguk&st=9jhdoj64&dl=1",
+                url: "https://www.dropbox.com/scl/fi/lap7a5088vje6880cwk7l/John-Carter-1080p-DUAL-2.72-GB.mkv?rlkey=pv6qvknlilukespct7juzd4rw&st=uodiip2t&dl=1"
+            },
+            {
+                titulo: "Jackie Chan - Masacre en el Barrio Chino",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/wqe4w8m7cc3j7j8kexaz8/masacre_en_el_barrio_chino.png?rlkey=0d0i9oprtta1z8i56xtuktmrp&st=3e6vqxrf&dl=1",
+                url: "https://www.dropbox.com/scl/fi/6b1dm8osvx2g0ottniw6k/LA-PEL-CULA-M-S-BRUTAL-DE-JACKIE-CHAN_-Masacre-en-el-Barrio-Chino_-COMPLETA-Y-DOBLADA-1080P_HD.mp4?rlkey=wuw3fcxzn6a55eeor2lnadr8b&raw=1"
+            },
+            {
+                titulo: "Goat (2026)",
+                genero: "Aventura",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/ls4eh3fjkhqphhwcr6dyy/goat.png?rlkey=1w3kv950qiy5ogdze3n48a369&st=dapdlsmw&dl=1",
+                url: "https://www.dropbox.com/scl/fi/2wtt4v31mdre0pq4eczyd/La.Cabra.Que.Cambi-.El.Juego.-.Goat.2026.1080P-Dual-Lat.mp4?rlkey=v8e4hp2586zyvv42xpg6zvn34&raw=1"
+            },
+            {
+                titulo: "Película Cristiana Motivacional",
+                genero: "Drama",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/5nf8epy5gedx12ng6cbe0/siempre_da_fuerzas.png?rlkey=ii61mmxz63xzhx93cd0gq32s1&st=fw9j75y9&dl=1",
+                url: "https://www.dropbox.com/scl/fi/1dc6kq9yd2yjnc56sx2sn/Una-pel-cula-que-tocar-cada-coraz-n-Dios-siempre-da-fuerzas-a-quienes-l-llama-1080P_HD.mp4?rlkey=wuammsbaxeowpwn0rj3m7x1kv&raw=1"
+            },
+            {
+                titulo: "Jason Statham vs Jet Li",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/lg2qe0mv1iouefn3gfrr5/jason_statham_vs_jet_li.png?rlkey=f7d708kd8lr3q1i666arpz237&st=nppix9ke&dl=1",
+                url: "https://www.dropbox.com/scl/fi/miezjtxp8ia7slkjx980b/JASON-STATHAM-VS-JET-LI-__-Pel-cula-Completa-en-HD-__-MOVIE-NATION-SPANISH-1080P_HD.mkv?rlkey=frs1iv4bpdfpt3a8wamu1cpim&raw=1"
+            },
+            {
+                titulo: "Megan Fox Acción África",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/4s8axluovel9jehod2k4l/Megan_Fox_Acci-n_-frica.png?rlkey=k9zs3namytls1l6642k7yeexo&st=6qfcyuys&dl=1",
+                url: "https://www.dropbox.com/scl/fi/loul04gtoow4a910w4kt3/La-pel-cula-de-acci-n-m-s-emocionante-con-Megan-Fox-en-la-sabana-africana-Pelicula-completa-1080P_HD.mp4?rlkey=2ye7jo0u0tbroarcqx2ulure4&raw=1"
+            },
+            {
+                titulo: "Jackie Chan Masacre Barrio Chino",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://via.placeholder.com/180x260?text=Jackie+Chan",
+                url: "https://www.dropbox.com/scl/fi/6b1dm8osvx2g0ottniw6k/LA-PEL-CULA-M-S-BRUTAL-DE-JACKIE-CHAN_-Masacre-en-el-Barrio-Chino_-COMPLETA-Y-DOBLADA-1080P_HD.mp4?rlkey=wuw3fcxzn6a55eeor2lnadr8b&raw=1"
+            },
+            {
+                titulo: "Chuck Norris Acción",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/y5kb1lldypge3p6jt14y4/Chuck_Norris_Acci-n.png?rlkey=7in5buzpsa0j856a8sn5s9r7e&st=azqahae0&dl=1",
+                url: "https://www.dropbox.com/scl/fi/q15odgodc26skohva62n9/Legendary-Movie-by-Chuck-Norris-_-Hollywood-Action-Movie-_-Full-Movie-Action-Movies-1080p-1080P_HD.mp4?rlkey=9mzaq8webeb65xguy337bxwlg&raw=1"
+            },
+            {
+                titulo: "Lionheart 1990 Van Damme",
+                genero: "Acción",
+                calidad: "4K",
+                poster: "https://www.dropbox.com/scl/fi/9stqzhmsgx4z28dsog35i/Lionheart_1990.png?rlkey=e1x5zgk75nxy4ide1uvsle0dz&st=ymi1po83&dl=1",
+                url: "https://www.dropbox.com/scl/fi/tavjxtn8ofm3xsgdj7doc/Lionheart-1990-Jean-Claude-Van-Damme-_-No-mercy.-No-limits.-Only-fists-and-fury.-4K-1080P_HD.mp4?rlkey=hvf6tjusvsjmbotq36erd10ml&raw=1"
+            },
+            {
+                titulo: "Triple Amenaza 2019",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/f1lh2in3ympa56pzb4klc/Triple_Amenaza_2019.png?rlkey=injixxb2u59ht83ocjdpfbqms&st=njiggl12&dl=1",
+                url: "https://www.dropbox.com/scl/fi/qmzcekrd8xqnp88yiidvm/Triple-Amenaza-2019-Pel-culas-En-Espa-ol-1080P_HD.mp4?rlkey=jjrap8gigq7qd8f0u84ptvr0d&raw=1"
+            },
+            {
+                titulo: "El Aguijón del Desierto",
+                genero: "Aventura",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/yccq0vkfeyt85qsq7likb/El_Aguij-n_del_Desierto.png?rlkey=x2z6mpugaxk8qrz0wc0hma1rd&st=1lodx8ju&dl=1",
+                url: "https://www.dropbox.com/scl/fi/yhiiheqa7iz6qbfk09r52/ESTA-PEL-CULA-ES-SIMPLEMENTE-MARAVILLOSA_-QUE-PIENSAS-DE-EL_-EL-AGUIJ-N-DEL-DESIERTO-1080P_60FPS.mp4?rlkey=gtw3zyad3m3o3lixjixoqjbc9&raw=1"
+            },
+            {
+                titulo: "Tarzán Animada",
+                genero: "Animación",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/abr8boayt9hopq16rnxx5/Tarz-n_Animada.png?rlkey=fabnulv9bce3yk18s85ivg426&st=i84lj0qz&dl=1",
+                url: "https://www.dropbox.com/scl/fi/8jq4uw5t9s76jihjiawhu/Mejor-Pel-cula-Animada-de-Aventura-_-Tarzan-_-Peliculas-Completas-en-Espa-ol-Latino-1080P_HD.mp4?rlkey=t0t3a0whl4npi7dyr6wq7lv8n&raw=1"
+            },
+            {
+                titulo: "IP Man 1",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/7mgtje7v899ul84wqd63m/IP_Man_-1.png?rlkey=vi1wie3p9ejldr6w1tc3lc8ag&st=k3zytj8r&dl=1",
+                url: "https://www.dropbox.com/scl/fi/cx8vld4drtn9m6sd86ys3/IP_MAN.mp4?rlkey=ot4s978rsk4bcvar7s90yof83&raw=1"
+            },
+            {
+                titulo: "IP Man 2",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/voxlmh6wwi69bs7xx879h/IP_Man_-2.png?rlkey=eluwo4rectkhfc2vmytkskubm&st=5hab1bjx&dl=1",
+                url: "https://www.dropbox.com/scl/fi/xc19r67egbo7m1kvifunl/ip_man_-2.mp4?rlkey=f2dikhlqwhgth7i1cwur9wiwt&raw=1"
+            },
+            {
+                titulo: "IP Man 3",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/dtig480u9sbjc3eat3vxc/IP_Man_-3.png?rlkey=gaz410em7j07elasclh1dgdxh&st=6bpwosi9&dl=1",
+                url: "https://www.dropbox.com/scl/fi/nnjb3yqw1rsetbxbhvxs7/IP_man_-3.mp4?rlkey=t9dsam23w0dtrsp99lui0hjmk&raw=1"
+            },
+            {
+                titulo: "IP Man 4",
+                genero: "Acción",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/lum3r80v3ki764b6w06f6/IP_Man_-4.png?rlkey=pays9jdj4iajtwpvb9gplvusx&st=hp7swywc&dl=1",
+                url: "https://www.dropbox.com/scl/fi/bkt6b96cqyaw5608g95wz/IP_man_-4.mp4?rlkey=llpdwiksmzmo075ncqca3p3t6&raw=1"
+            },
+            {
+                titulo: "Ratatoy",
+                genero: "Animación",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/yss8mmmdewdb3o0jgote5/Ratatoy.png?rlkey=rd9m44vg55frv0f7t2y6nd65i&st=5vr2oovm&dl=1",
+                url: "https://www.dropbox.com/scl/fi/wofo55ja6xn1ohp3qvm0z/ratatoy.mp4?rlkey=tvmnviozl7zcr0bv83knsol2y&raw=1"
+            },
+            {
+                titulo: "Huevos",
+                genero: "Animación",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/agcamu411tjoz6bub97jr/huevos.png?rlkey=tsmztxn71v9kszlvvz7in550c&st=s5vur16n&dl=1",
+                url: "https://www.dropbox.com/scl/fi/mt6h26znq706zm0e75t5f/huevos.mp4?rlkey=wilpj2ah3v2uezualz4lkxxe4&raw=1"
+            },
+            {
+                titulo: "Gol 1",
+                genero: "Drama",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/noyondb3wnoy68n2ctjs2/gol.png?rlkey=ykazkd5nk2tz0v5v95djp9kra&st=i7bmen2o&dl=1",
+                url: "https://www.dropbox.com/scl/fi/sh073ketfjfaamwg1e65p/Gol.mp4?rlkey=hu4mbcjlr9ivgj0x0ucryv8no&raw=1"
+            },
+            {
+                titulo: "Gol 2",
+                genero: "Drama",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/d52bx0xq0ye6uy08gv6jt/gol_2.png?rlkey=76mzxidptrzxa1dejf5m5m64v&st=dscdapy9&dl=1",
+                url: "https://www.dropbox.com/scl/fi/ae07um7ccznqljw46tin5/GOL_-2.mp4?rlkey=qmecdhmesqr0wha78b5b9jpfi&raw=1"
+            },
+            {
+                titulo: "Gol 3",
+                genero: "Drama",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/unweaqx3iecdkbxnjugqd/gol_3.png?rlkey=8tigtoqyzqqr19wtx5adj2pft&st=lvkx272v&dl=1",
+                url: "https://www.dropbox.com/scl/fi/kchi5sp0qwtye2mc2scy5/GOL_-3.mp4?rlkey=j9xrgrjvl7rkaiwmydms03v2o&raw=1"
+            },
+            {
+                titulo: "La Montaña Embrujada (2009)",
+                genero: "Aventura",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/po3p58mrln8kgm1q4j6sv/La_Monta-a_Embrujada.png?rlkey=w0srsjceq2sjf0xc31jdqwqhj&st=0dzqenzv&dl=1",
+                url: "https://www.dropbox.com/scl/fi/ssuka43d0uiooe3jh6cw0/La.Monta-a.Embrujada.2009.1080P-Dual-Lat.mp4?rlkey=f77mdvxtz0dlvd2muhhhqc0pg&raw=1"
+            },
+            {
+                titulo: "Alabanzas Cristianas para Niños",
+                genero: "Comedia",
+                calidad: "HD",
+                poster: "https://www.dropbox.com/scl/fi/cg1b6oyw19kduciopfslf/Alabanzas_Cristianas_para_Ni-os.png?rlkey=sasg85do5pjzrnhhp58h60v7d&st=bjvyqzp6&dl=1",
+                url: "https://www.dropbox.com/scl/fi/ec4fbtfsxd8elwdx2w9sx/Alabanzas-Cristianas-para-Ni-os-sin-Pausa-1h10m-de-Coritos-que-Har-n-Gozar-720P_HD.mp4?rlkey=kkz6evoturk0bgxtvv6krhags&raw=1"
+            },
+            {
+                titulo: "Isla Larva: La Película",
+                genero: "Animación",
+                calidad: "720P",
+                poster: "https://www.dropbox.com/scl/fi/wf1vqs3afluil2khblyup/larva.png?rlkey=6ngd2688khe4uon0ewlwcfiy1&st=sohaaibh&dl=1",
+                url: "https://www.dropbox.com/scl/fi/vgc0avqb2pmu60nthwgc0/Isla-Larva-La-pel-cula-720p-DUAL-1.72-GB.mp4?rlkey=u8mq8hipr2v2bfh0f5wfp37uo&raw=1"
+            },
+            {
+                titulo: "Música de Bendición",
+                genero: "Drama",
+                calidad: "HD",
+                poster: "https://www.dropbox.com/scl/fi/u66l6nvkbrl5gza25dxf0/musica_cristianas.png?rlkey=0mlbslutnd94xxhn270gis36s&st=4mhsghfs&dl=1",
+                url: "https://www.dropbox.com/scl/fi/1fszg47126v151rdt5odt/MUSICA-DE-BENDICION.mp4?rlkey=8em67h27xh3y8g18x99jykp4j&raw=1"
+            },
+            {
+                titulo: "Ace Ventura: Detective De Mascota (1994)",
+                genero: "Comedia",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/m0o8kg2q4jxf218hd0z03/Detective_De_Mascota.png?rlkey=3d88ghpir454vnezpth8krt8s&st=5pb8svcn&dl=1",
+                url: "https://www.dropbox.com/scl/fi/3bzt4hbrpveczxipoq67g/Ace.Ventura.1.Detective.De.Mascota%20Luus.1994.1080P-Dual-Lat.mp4?rlkey=lrywtro26t3nwll8e5t6onmyd&raw=1"
+            },
+                {
+        titulo: "El Club De Los Desahuciados (2013)",
+        genero: "Drama",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/nbudknv69phoncd29jn3f/desahusido.png?rlkey=8lzpj18o4sz8g6ptrc3dfrzpq&st=o86ng1pa&dl=1",
+        url: "https://www.dropbox.com/scl/fi/r2vcx8djldtkhvivcqgpr/El.Club.De.Los.Desahuciados.2013.1080P-Dual-Lat.mp4?rlkey=d02b88v8tvz4ptbxn9jyc98wb&st=&dl=1"
+    },
+    {
+        titulo: "El Show De Truman (1998)",
+        genero: "Comedia / Drama",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/lhm6gurjuds4n43t22qs3/truman.png?rlkey=tnlb9vg32y9boh8rotqksbsc1&st=3kx7936j&dl=1",
+        url: "https://www.dropbox.com/scl/fi/qsy4saxwxn9gbcfl1v4xw/Elshowdetruman.1998.1080P-Dual-Lat.mp4?rlkey=km7pb5buov8ph2m8qnaotkmit&st=&dl=1"
+    },
+    {
+        titulo: "Family Switch (2023)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/6b44nda8n5p8wib6jpr4h/familia.png?rlkey=gi52hng9myx4svs3hdwd8cals&st=x548pzj2&dl=1",
+        url: "https://www.dropbox.com/scl/fi/pbnxr2u32157e4e59en6y/Family.switch.2023.1080P-Dual-Lat.mp4?rlkey=9jykjuy91y5nyl7clw957jqvq&st=&dl=1"
+    },
+    {
+        titulo: "Irene, Yo Y Mi Otro Yo (2000)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/y0j86j906rcfefl47wtcy/yo_y_mi_otro_yo.png?rlkey=x5wafjibhtdoobikritx660m2&st=8s98k6tl&dl=1",
+        url: "https://www.dropbox.com/scl/fi/stzw57xi3uuoq34gac5wk/Irene.Yo.Y.Mi.Otro.Yo.2000.1080P-Dual-Lat.mp4?rlkey=jn9b4jq6dpyzer00xa63cp6sf&st=&dl=1"
+    },
+    {
+        titulo: "La Máscara (1994)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/need4enu37g4tra9xwlem/la_mascara.png?rlkey=nplvll4ogftbqtia1t16rbdbf&st=douj1rlh&dl=1",
+        url: "https://www.dropbox.com/scl/fi/9w69q0l1q321lxs1qxbie/La.M-scara.1994.1080P-Dual-Lat.mp4?rlkey=grzlxdyesxk0ao7w71erncptf&st=&dl=1"
+    },
+    {
+        titulo: "Las Locuras De Dick Y Jane (2005)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/j9jit183mla178w8a5cg3/dick_jane.png?rlkey=18mw5v0rmcw6rlthbz5crmvzi&st=prgervxs&dl=1",
+        url: "https://www.dropbox.com/scl/fi/d69vh01yo2yt9s28vuujg/Las.Locuras.De.Dick.Y.Jane.2005.1080P-Dual-Lat.mp4?rlkey=t7yeofirz4bb4x5dw4yxv8cpp&st=&dl=1"
+    },
+    {
+        titulo: "Mentiroso Mentiroso (1997)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/5crfxy4uzj6w02c716w6a/mentiroso.png?rlkey=65bgvg8z711gzbqpepyx076dw&st=26mh4542&dl=1",
+        url: "https://www.dropbox.com/scl/fi/k6amqgaf2612ebqbj8w4o/Mentiroso.Mentiroso.1997.1080P-Dual-Lat.mp4?rlkey=r62vushak5jzfb9841xse2rzn&st=&dl=1"
+    },
+    {
+        titulo: "Sí, Señor (2008)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/r31ncfb57yz09ybiql4l7/si_se-or.png?rlkey=ur31ud7p4muqetxuqo3yxdk9h&st=69y4iva7&dl=1",
+        url: "https://www.dropbox.com/scl/fi/tg4u0bh6tkhxbzr0rpngd/S-.Se-or.2008.1080P-Dual-Lat.mp4?rlkey=9m9jof98sh9qxrqdnzeqdrdur&st=&dl=1"
+    },
+    {
+        titulo: "Sonic 2 La Película (2022)",
+        genero: "Aventura / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/bwaes1wvesaon6frspi63/Sonic_2.png?rlkey=8pga5c2jz0zqnqd2i1atc51wq&st=0l9if14i&dl=1",
+        url: "https://www.dropbox.com/scl/fi/gfn003c40f91u1hp60txm/Sonic.2.La.Pel-cula.2022.1080P-Dual-Lat.mp4?rlkey=fio949yyyyly0gna07g4ldxpu&st=&dl=1"
+    },
+    {
+        titulo: "Sonic The Hedgehog (2020)",
+        genero: "Aventura / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/7ef868wab6syg9xlxx4ly/Sonic_1.png?rlkey=usa7tdy5j8erbkgaewvlffra0&st=x7lv93im&dl=1",
+        url: "https://www.dropbox.com/scl/fi/wno0qnrsqpkny6fzkitbv/Sonic.The.Hedgehog.2020.1080P-Dual-Lat.mp4?rlkey=vqie3uen81qekcw8q8i1iqoff&st=&dl=1"
+    },
+    {
+        titulo: "Todopoderoso (2003)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/f2b5tx8ofperdx10k927k/todopoderoso.png?rlkey=rrpp2wrs8o14rqvunxixmrg7t&st=ujlsdqsp&dl=1",
+        url: "https://www.dropbox.com/scl/fi/558xlin9hro72h78sgr2d/Todopoderoso.2003.1080P-Dual-Lat.mp4?rlkey=w8q21jb7ubwdmwjmhtjepbvpd&st=&dl=1"
+    },
+    {
+        titulo: "Horton Y El Mundo De Los Qui-n (2008)",
+        genero: "Animación",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/qycsidcpdgvqq5wo6t5nr/Home.Invasion.png?rlkey=nc9x03h4fci2206qp2zwjgvvp&st=l8i2w1sl&dl=1",
+        url: "https://www.dropbox.com/scl/fi/dbqufxqmrfigq1pda1a0t/Horton.Y.El.Mundo.De.Los.Qui-n.2008.1080P-Dual-Lat.mp4?rlkey=cewo1f6630m3ivh2fadjr7i7d&st=&dl=1"
+    },
+    {
+        titulo: "El Grinch (2000)",
+        genero: "Comedia / Fantasía",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/ebp12u35br41bobrjl0mp/El_Grinch.png?rlkey=z0jdt4jq50qcno0whn5du39bs&st=khtqwrel&dl=1",
+        url: "https://www.dropbox.com/scl/fi/p5us1owfl72k59ipvm4vc/El.Grinch.2000.1080P-Dual-Lat.mp4?rlkey=yjyg8ho9xfq51xn4gb1m2qzs3&st=&dl=1"
+    },
+    {
+        titulo: "Agente Fortune - El Gran Engaño (2023)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/ujptipgcqb8kotpvxww4i/agente_fortune.jpeg?rlkey=vop8zbf8muvp0t8k6pphajnxu&st=dn88dsls&dl=1",
+        url: "https://www.dropbox.com/scl/fi/0xxzzlitrd6p8lqbkzj91/Agente.Fortune-.El.Gran.Enga-o.2023.1080P-Dual-Lat.mp4?rlkey=ks6zrvt2x9pucu8gz1jhve6pj&st=&dl=1"
+    },
+        {
+        titulo: "12 Desafios (2009)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/cuppis7c9ykh2w6e45s74/12_Desafios.png?rlkey=yjg55ot9wc9hodn8cyfbpdjla&st=miht12eb&dl=1",
+        url: "https://www.dropbox.com/scl/fi/s6m4h7t432rvoxe61o1k4/12.Desafios.2009.1080P-Dual-Lat.mp4?rlkey=s3k2rbablynnaxuu843ptu4a2&st=&dl=1"
+    },
+    {
+        titulo: "American Assassin (2017)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/06kx7zfrc5kffuib79hto/american_assasin.jpg?rlkey=uled03hj0x3j6pjighr7obyuo&st=k1etjync&dl=1",
+        url: "https://www.dropbox.com/scl/fi/vl51rgwk2rl9g689ts7n0/American.assassin.2017.1080P-Dual-Lat.mp4?rlkey=tetcd4i8rgs75udqguhniaxgq&st=&dl=1"
+    },
+    {
+        titulo: "Asesinatos Accidentales (2018)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/5aejamqwbspzu32zqgwu1/asesoramiento.jpeg?rlkey=e8zbhrzna11qnrwbjpxstdty7&st=t02v5n12&dl=1",
+        url: "https://www.dropbox.com/scl/fi/t09luo4vtgjriej5ubwqw/Asesinatos.Accidentales.2018.1080P-Dual-Lat.mp4?rlkey=p63ao4k97d4j42tjw146rem9q&st=&dl=1"
+    },
+    {
+        titulo: "Asesinos De Élite (2011)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/5ciopi6t4g9lg7mu1soa2/asesinato_elite.jpeg?rlkey=023d7nl3ddog7hqu9kfsp2g6e&st=pcsspry0&dl=1",
+        url: "https://www.dropbox.com/scl/fi/t0387qgei018abor27t24/Asesinos.De.-lite.2011.1080P-Dual-Lat.mp4?rlkey=wqblcevibsk7b6e6a4skowlnk&st=&dl=1"
+    },
+    {
+        titulo: "Baywatch (2017)",
+        genero: "Comedia / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/3607qu3jnwgf4ny7ln3lu/Bay_watch.jpeg?rlkey=m0kmbliufmuxsinlyqoet9mtd&st=v8jn6r24&dl=1",
+        url: "https://www.dropbox.com/scl/fi/4xn6o9zph2oe6zhsxn1gl/Baywatch.2017.1080P-Dual-Lat.mp4?rlkey=0t7qe1wc7nnflwb13bfnrcz9o&st=&dl=1"
+    },
+    {
+        titulo: "Big Game (2014)",
+        genero: "Acción / Aventura",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/0ijrik9nq3es5foq9xg04/big_game.jpeg?rlkey=nrtv10u8sy4ipwr6k9wxnqcew&st=up0rnkuu&dl=1",
+        url: "https://www.dropbox.com/scl/fi/2ozijwtm4zgpkxto8r7u8/Big.Game.2014.1080P-Dual-Lat.mp4?rlkey=vw78u2qobgulp0iahd5mcdkni&st=&dl=1"
+    },
+    {
+        titulo: "Castle Falls (2021)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/gq3dzvvyvxapi5ytzrsst/clandestino.jpeg?rlkey=1y10ginwjaue9974bzxr6yxoh&st=gmgy988y&dl=1",
+        url: "https://www.dropbox.com/scl/fi/qdgd1nr4ylphw544nrloh/Castle.Falls.2021.1080P-Dual-Lat.mp4?rlkey=730apurly8or1uci1wjtmff0v&st=&dl=1"
+    },
+    {
+        titulo: "Celular (2004)",
+        genero: "Suspenso / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/w2daga6n0t9v9qrnbe539/celular.jpeg?rlkey=v3u3pvi59vjnvaoezdkewonuq&st=hokn9cbs&dl=1",
+        url: "https://www.dropbox.com/scl/fi/vjg14tqdeh7awo0khr9lj/Celular.2004.1080P-Dual-Lat.mp4?rlkey=sx87uh2bzpz6lxhhibzcgsv5a&st=&dl=1"
+    },
+    {
+        titulo: "Código Traje Rojo (2024)",
+        genero: "Acción / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/218ie0lh03yy0cpf90qu9/c-digo_rojo.jpeg?rlkey=tgzhoq05ges6pp3qgrufxnevv&st=btrzkni2&dl=1",
+        url: "https://www.dropbox.com/scl/fi/4zju1xaaqbm8rtrshx1zv/C-digo.Traje.rojo.2024.1080p-Dual-Lat-1.mp4?rlkey=jhpdmao6xkbgu59c1cgwnbxc8&st=&dl=1"
+    },
+    {
+        titulo: "Combate Clandestino (2024)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/6a2rqu2oio82rndfux6l0/combate.png?rlkey=84dwfky2hexvs9ws2b3lyuy8t&st=o2aagd33&dl=1",
+        url: "https://www.dropbox.com/scl/fi/ss0poinssd3v3z01ih28k/Combate-Clandestino.2024.1080P-Dual-Lat.mp4?rlkey=4rbz3zfxi8l0uda6md3pgrup1&st=&dl=1"
+    },
+    {
+        titulo: "Crank: Muerte Anunciada (2006)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/fkztyebjovdjeziod800q/crank.jpeg?rlkey=gdj73280jcazsdd66pjwwhqnv&st=wbh54ea9&dl=1",
+        url: "https://www.dropbox.com/scl/fi/cu1vt31yduyzv6ux3giwx/Crank.muerte.anunciada.2006.1080P-Dual-Lat.mp4?rlkey=wrd0lypnjy56zkdlqwxhq922t&st=&dl=1"
+    },
+    {
+        titulo: "Daño Colateral (2002)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/gaspr93c6ufs3hvum5zxm/da-o_colateral.png?rlkey=gwykfjipu2trwsgfrfb94cynw&st=j57mwukr&dl=1",
+        url: "https://www.dropbox.com/scl/fi/u0vapdhyjzfg7by7ik7az/Da-ocolateral.2002.1080P-Dual-Lat.mp4?rlkey=yrlyum22cre1jzu4x13zy0axe&st=&dl=1"
+    },
+    {
+        titulo: "El Planeta de los Simios: Revolución (2011)",
+        genero: "Ciencia Ficción / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/yrj93yuszydfags9o73b8/simio_revolucion.jpeg?rlkey=9rsotz5g1egap8swdacyg6qkd&st=upec0lqy&dl=1",
+        url: "https://www.dropbox.com/scl/fi/fmi2cq0zvgnq53qoetntz/El.planeta.de.los.simios.-R-Evoluci-n.2011.1080p-dual-lat.mp4?rlkey=qck0cfb3wm2cz5y7f8b4bdf8m&st=&dl=1"
+    },
+    {
+        titulo: "El Planeta de los Simios: La Guerra (2017)",
+        genero: "Ciencia Ficción / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/zcgwb8f1pbus5z91h2ajo/simio_la_guerra.jpeg?rlkey=pvw2m0ccc09y3uiamo8vf78w4&st=mnicy1e0&dl=1",
+        url: "https://www.dropbox.com/scl/fi/408ki041xq30fsavik9vd/El.Planeta.de.los.Simios.La.guerra-.2017.1080p-dual-lat.mp4?rlkey=j1mazpujxli92pm1poljt6sit&st=&dl=1"
+    },
+    {
+        titulo: "El Planeta de los Simios: Confrontación (2014)",
+        genero: "Ciencia Ficción / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/mfypqtg1393t15xfmy6vz/simio_confrontacion.jpeg?rlkey=fdrm8dpwxrwtdzptia3909pqu&st=3j3kkwni&dl=1",
+        url: "https://www.dropbox.com/scl/fi/9vpmp14axufk2vh2m7j0k/El.planeta.de.los.simios.Confrontaci-n.2014.1080p-dual-lat.mp4?rlkey=jwovlew32fvsnvujuc7o7b50v&st=&dl=1"
+    },
+    {
+        titulo: "El Rey Escorpión (2002)",
+        genero: "Acción / Aventura",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/8feptxbur6sxdg6zm80hs/rey_escorpion.png?rlkey=mxsfy0ggfl4drwvwgop1slcc3&st=ojeb83zt&dl=1",
+        url: "https://www.dropbox.com/scl/fi/nd85bvur3fetj7e08cj6z/El.Rey.Escorpi-n.2002.1080P-Dual-Lat.mp4?rlkey=5z4mdzbpobwgxdojls52p3ifo&st=&dl=1"
+    },
+    {
+        titulo: "El Redentor (2013)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/56mmhkytp445xka3vvfhv/redentor.jpeg?rlkey=3jsteyth7ci9bbkmj17rs2vf1&st=xkz88nab&dl=1",
+        url: "https://www.dropbox.com/scl/fi/2xrlr0wr17l7mqs0071lk/El.redentor.2013.1080P-Dual-Lat.mp4?rlkey=lrkz1emkpuq8j7hm29qy7me4w&st=&dl=1"
+    },
+    {
+        titulo: "Justicia Implacable (2021)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/l0y8lx5u8ve6d1g0o709j/justicia_implacable.png?rlkey=34b04n59akfcizs1o73tsm6la&st=nfjs003h&dl=1",
+        url: "https://www.dropbox.com/scl/fi/w54uqfndooqlx4fh808a9/Justicia.Implacable.2021.1080P-Dual-Lat.mp4?rlkey=7gjha2rmhml77pkax3jykizut&st=&dl=1"
+    },
+    {
+        titulo: "La Deuda 2",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/o0d034y2eh6cph66i92it/la_deuda_2.png?rlkey=oipr7jqmtdg5t2z9l1xpzmcpb&st=mknx57rw&dl=1",
+        url: "https://www.dropbox.com/scl/fi/s811l1xsvckrc7dnpwkmo/La.Deuda.2.1080P-Dual-Lat.mp4?rlkey=yxv2eb5qp9uab37n2w7b80rc8&st=&dl=1"
+    },
+    {
+        titulo: "El Transportador (2002)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/2fj4hsutyy2mad8kiofgy/transportador.png?rlkey=i5fxskq1ms4ib0exvm779x0hv&st=f29mykfd&dl=1",
+        url: "https://www.dropbox.com/scl/fi/q0p6nk4ckkj8rpebtfz6w/El.Transportador.2002.1080P-Dual-Lat.mp4?rlkey=gk6xhkxgfarj3327oz3dh987d&st=&dl=1"
+    },
+    {
+        titulo: "El Transportador 2 (2005)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/54k4np8kua9pyl6qmtf7w/transportador_2.png?rlkey=f6lvrcjmqhd9uedpitdvyap8y&st=1kdnfvxr&dl=1",
+        url: "https://www.dropbox.com/scl/fi/4vlyjmao3c18b70if06s1/El.Transportador.2.2005.1080P-Dual-Lat.mp4?rlkey=0e1g9b07tc51znye45ox5fyuo&st=&dl=1"
+    },
+        {
+        titulo: "El Transportador 3 (2005)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/m8c3wb6vrix4y047zykna/transportador_3.png?rlkey=h0optokxri604ngppjnhdmb90&st=4bvi9ez7&dl=1",
+        url: "https://www.dropbox.com/scl/fi/3ym7nc9rx9w2jzv7rlbgo/El.Transportador.3.2005.1080P-Dual-Lat-1.mp4?rlkey=vda3tqifdtseqhgfjoihfxqhg&st=&dl=1"
+    },
+    {
+        titulo: "Elio",
+        genero: "Animación / Aventura",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/6ou43qt14pkdm7xfn136k/elio.jpeg?rlkey=y2rjuuzi9cswnujqrtg1088kv&st=znpf62dx&dl=1",
+        url: "https://www.dropbox.com/scl/fi/w8abo0837a55p6wu5867i/Elio-1080p-DUAL-8.15-GB.mp4?rlkey=7rcb87lh8e0efdrmowp1dst6j&st=&dl=1"
+    },
+    {
+        
+        titulo: "Loca Academia De Pilotos 2",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/1pvoddo1wx1x2szyzyivh/cademia_piloto_2.png?rlkey=mxr9mth6kava77zcwutp7iy6d&st=gf6zpfgd&dl=1",
+        url: "https://www.dropbox.com/scl/fi/7we30xjz2nlfd2znu8oqe/Loca.Academia.De.Pilotos.2.1080P-Dual-Lat.mp4?rlkey=hm798tl868dldqjf1hhx7buum&st=&dl=1"
+    },
+    {
+        titulo: "Mentiras Verdaderas (1994)",
+        genero: "Acción / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/e606tjmls08ety19sntmr/mentira_verdadera.png?rlkey=57vmf5vn8xxu7oax19vmv092u&st=wr0ktbvj&dl=1",
+        url: "https://www.dropbox.com/scl/fi/nh06rdu4zpyqhuiln28wl/Mentirasverdaderas.1994.1080P-Dual-Lat-1.mp4?rlkey=ryvzii49u06vil6frak3ksn81&st=&dl=1"
+    },
+    {
+        titulo: "Mercenarias: Misión Imposible",
+        genero: "Acción / Comedia",
+        calidad: "720P",
+        poster: "https://www.dropbox.com/scl/fi/0lmrwhi90p5bg2tmdcqym/mercader-a.png?rlkey=s17o2e3b7rzskr53fhw6fkpc4&st=qupljlj2&dl=1",
+        url: "https://www.dropbox.com/scl/fi/rru3tg3asvzhhq5p169ga/Mercenarias_-Misi-n-Imposible-Pel-cula-de-Acci-n-y-Comedia-Completa-720P_HD.mp4?rlkey=vdvcn8eyr68w33lzhk3yi7928&st=&dl=1"
+    },
+    {
+        titulo: "Mi Pobre Angelito (1990)",
+        genero: "Comedia / Familiar",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/i2wkdzhaxhfyljqco3cyt/pobre_angelito.png?rlkey=jpsn3hqk4xnf5hnt00kff8cu7&st=awafepaw&dl=1",
+        url: "https://www.dropbox.com/scl/fi/0x5cntx7c3rmh8tk3hbbp/Mi.Pobre.Angelito.1990.1080P-Dual-Lat.mp4?rlkey=sdjhbginn0qi0sv5knc42bv8m&st=&dl=1"
+    },
+    {
+        titulo: "Mi Pobre Angelito 2: Perdido En Nueva York (1992)",
+        genero: "Comedia / Familiar",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/1efhibv2e3kozkac1gqun/pobre_angelito_2.png?rlkey=j1kvq7l24ag4l8d1z68d2v52z&st=qv7wvj9u&dl=1",
+        url: "https://www.dropbox.com/scl/fi/rlghl85j7i5gpq2c7yqvc/Mi.Pobre.Angelito.2.Perdido.En.Nueva.York.1992.1080P-Dual-Lat.mp4?rlkey=4pexs89omr321omoddmb3yagf&st=&dl=1"
+    },
+    {
+        titulo: "Pain and Gain (2013)",
+        genero: "Comedia / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/0en4poa1f3xt8x61kzvds/Pain.and.Gain.png?rlkey=4urx3p6vrmsya4dzmk0q2yc98&st=rtxfrahv&dl=1",
+        url: "https://www.dropbox.com/scl/fi/48mrbp0uhtwybo3sesbob/Pain.and.Gain.2013.latino-e-ingles-subt.mp4?rlkey=vvqqoil9s223gljr07b307th4&st=&dl=1"
+    },
+    {
+        titulo: "Papillon: La Gran Fuga (2017)",
+        genero: "Drama / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/oepqiwiemr423hwqn3hzw/Papillon.La.Gran.Fuga.png?rlkey=x0nkeo25puwu44fndwaaop5xw&st=mg15jox1&dl=1",
+        url: "https://www.dropbox.com/scl/fi/fojky1lfvu03whfrgbszd/Papillon.La.Gran.Fuga.2017.1080P-Dual-Lat.mp4?rlkey=jpmypll8bnxu0lt5ewxpi71qj&st=&dl=1"
+    },
+    {
+        titulo: "Planeta 51 (2009)",
+        genero: "Animación / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/lw66kj6dul96z724up7fu/planeta_51.png?rlkey=ymcn0cjs7aag2i9fpa97wcg34&st=6s6ugfvv&dl=1",
+        url: "https://www.dropbox.com/scl/fi/bdza3zwur8uscutq5yz2d/Planeta.51.2009.1080P-Lat.mp4?rlkey=1c3tdw9vqe7y32d7fddeoz5f9&st=&dl=1"
+    },
+    {
+        titulo: "Prisionero De Guerra (2025)",
+        genero: "Acción / Bélica",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/i3isozsmiisudjp2li8m6/prisionero_de_guerra.png?rlkey=1txku3cjeenmpx4zz9nt94rle&st=26f6ktvu&dl=1",
+        url: "https://www.dropbox.com/scl/fi/222eq0tju0z9tm0hmg65n/Prisionero.De.Guerra.2025.1080P-Dual-Lat.mp4?rlkey=6b1v0a0aoidmnzj00ozw0j8od&st=&dl=1"
+    },
+    {
+        titulo: "Vida Salvaje (2006)",
+        genero: "Animación / Aventura",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/c4b9wlmkr4br8bicyznfe/vida_salvaje.png?rlkey=fzp074k0b3w519zkoqut78yfe&st=aevvvyft&dl=1",
+        url: "https://www.dropbox.com/scl/fi/4bugtcnvz8gk23oskd5yi/Vida.Salvaje.2006.1080P-Dual-Lat.mp4?rlkey=vx6gb0d78y5c18x6h284o7g7n&st=&dl=1"
+    },
+    {
+        titulo: "El Último Desafío (2013)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/vzppreplc7qobujohnu9y/ltimo_desafio.png?rlkey=cpce59y3841ep11e8gyt72ejc&st=wj3w8h8c&dl=1",
+        url: "https://www.dropbox.com/scl/fi/cqbxpxhbxwm3hi4oa1of5/El.-ltimo.desaf-o.2013.1080P-Dual-Lat.mp4?rlkey=tjslthzhqp1yvn0a5ex2tdwmk&st=&dl=1"
+    },
+    {
+        titulo: "Eraser: El Protector (1996)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/pybltajxljvv1edsr1b4h/Eraser_Elprotector.png?rlkey=ciddotejvd0k1rqexulx0tnnv&st=zzcgxfr5&dl=1",
+        url: "https://www.dropbox.com/scl/fi/tlxkxq2v2s89czaoonbrj/Eraser-Elprotector-.1996.1080P-Dual-Lat.mp4?rlkey=wolr2kvyt28yj4lsl4bb64bj9&st=&dl=1"
+    },
+    {
+        titulo: "Entrenando A Papá (2007)",
+        genero: "Comedia / Familiar",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/z5xodur9vrccrvqqoy0d7/entrenando_a_papa.png?rlkey=4sf4sgz54gi7okyjsapvi5a0f&st=wneom6ei&dl=1",
+        url: "https://www.dropbox.com/scl/fi/djbm136oif76majdb61v6/Entrenando.A.Papa.2007.1080P-Dual-Lat.mp4?rlkey=7hpp8opc9ze0vg657a3k3y6l8&st=&dl=1"
+    },
+    {
+        titulo: "Eliminators (2016)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/8d941typqc34n4jgydz6v/Eliminators.png?rlkey=38bwiwqk74jqdlxjjmii80318&st=x465hnaz&dl=1",
+        url: "https://www.dropbox.com/scl/fi/trgownbzr3zfvqu40xiyp/Eliminators.2016.1080P-Dual-Lat.mp4?rlkey=fvivwrz8tm6qhvvwqwhvpt49y&st=&dl=1"
+    },
+    {
+        titulo: "El Último Desafío (2013) [Alt]",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/vzppreplc7qobujohnu9y/ltimo_desafio.png?rlkey=cpce59y3841ep11e8gyt72ejc&st=9nxvtazs&dl=1",
+        url: "https://www.dropbox.com/scl/fi/7ii7vyd6sdid4fwzpilet/El.-ltimo.desaf-o.2013.1080P-Dual-Lat.mp4?rlkey=01zokzzitknogi6jcq3ydl4ns&st=&dl=1"
+    },
+    {
+        titulo: "Red Notice (2021)",
+        genero: "Acción / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/9d910sjp0v5ig04ydoao4/Red_Notice_2.png?rlkey=wukhiz57cztrf1rym860kss2h&st=1sitppz0&dl=1",
+        url: "https://www.dropbox.com/scl/fi/oe7ge79hbfzm04kuak2w4/Red.Notice.2021.1080P-Dual-Lat.mp4?rlkey=rim3u6mxtu449un8b5ss7r7mp&st=&dl=1"
+    },
+    {
+        titulo: "Pueblo Chico, Pistola Grande (2014)",
+        genero: "Comedia / Western",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/wlpin5u7saal7iszcw6kt/pueblo_pistolero.png?rlkey=ojybzazslev7zlfx3dujtf0r9&st=imrojlhe&dl=1",
+        url: "https://www.dropbox.com/scl/fi/m23ivaoq2n98pxqjy85vx/Pueblochico-pistolagrande.2014.1080P-Dual-Lat.mp4?rlkey=xtaqcua1lrlubiajmiroz0ypi&st=&dl=1"
+    },
+    {
+        titulo: "Sabotage (2014)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/cfra5pu7pa2q2fcno93sd/sabotage.png?rlkey=5uf1x6261hpoh3p80bdecmz64&st=hce9sh6t&dl=1",
+        url: "https://www.dropbox.com/scl/fi/9031p2rc67qxmusv3mctu/Sabotage.2014.1080P-Dual-Lat.mp4?rlkey=o7iildx61p09iddlt9rpv9z3d&st=&dl=1"
+    },
+    {
+        titulo: "Rescate En Las Alturas (2025)",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/bk4krd437nm8wzu1ac8hm/rescate_en_la_altura.png?rlkey=88rw4bwie0pjdrxcw7qy8k3wm&st=jytsdkfl&dl=1",
+        url: "https://www.dropbox.com/scl/fi/amprxmgcti9w9h2pq4fvj/Rescate.En.Las.Alturas.2025.1080P-Dual-Lat.mp4?rlkey=e12xw0mkqp1yw5r9230efgl4c&st=&dl=1"
+    },
+    {
+        titulo: "Sí, Señor (2008) [Alt]",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/ndvl1dbv3yjwakkymo4cy/si_se-or.png?rlkey=lwf741vcqbwr4yxiymmcdewc3&st=icglyl2o&dl=1",
+        url: "https://www.dropbox.com/scl/fi/rkbj12aubnbia81mn8rt4/S-.Se-or.2008.1080P-Dual-Lat.mp4?rlkey=8dpjnhp2ja12cjqx4cfihezv1&st=&dl=1"
+    },
+    {
+        titulo: "Snatch: Cerdos y Diamantes (2000)",
+        genero: "Crimen / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/0s3v55vqn5gx59z6aqpmy/cerdos_diamantes.png?rlkey=mzr49obdq1halo9ijtpc6lcz2&st=cm3ggcch&dl=1",
+        url: "https://www.dropbox.com/scl/fi/j9m2itj47cuyrnilh5uxs/Snatch.Cerdos.Y.Diamantes.2000.1080P-Dual-Lat.mp4?rlkey=v1yhbtt0cw8c1liq2gy1bg68i&st=&dl=1"
+    },
+        {
+        titulo: "Spy: Una Espía Despistada (2015)",
+        genero: "Comedia / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/51ctvpmtlysmr8raxe9ki/Spy_Una_esp-a_despistada.png?rlkey=mfkhf1fhk13bp4is87lub9ccw&st=n8qnzm9u&dl=1",
+        url: "https://www.dropbox.com/scl/fi/oepcd2jyx7170n8x3y1iw/Spy.Una.esp-a.despistada.2015.1080P-Dual-Lat.mp4?rlkey=uzr3u3ja5xdyr8udlcil2skd9&st=&dl=1"
+    },
+    {
+        titulo: "Superagente 86 (2008)",
+        genero: "Comedia / Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/jtpn2vzzdrsjsoj23sahv/Superagente86.png?rlkey=e05osrlxhb2rm6353nfj1v7ri&st=1i6ovbxl&dl=1",
+        url: "https://www.dropbox.com/scl/fi/2310yrpdhtjbau8331vf3/Superagente86.2008.1080P-Dual-Lat.mp4?rlkey=ccog316a126qpjde7ewl74pus&st=&dl=1"
+    },
+    {
+        titulo: "The Expendables 2 (2012)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/hojtaygb38nbeu6mkq3i5/los_indestructibles-2.png?rlkey=zhlnjmrgpk8f7cow4a4d94nuo&st=2sp7i6vi&dl=1",
+        url: "https://www.dropbox.com/scl/fi/246rqelh1nl2hpnrjkrjl/The.Expendables.2.2012.1080P-Dual-Lat.mp4?rlkey=8swz1zlb0yfbvokopvbkw0j3k&st=&dl=1"
+    },
+    {
+        titulo: "The Expendables 3 (2014)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/tgbncn94pp19lu1pat82w/los_indestructibles_3.png?rlkey=q663l73owbo6eaj8l8b06acbf&st=6t358j9i&dl=1",
+        url: "https://www.dropbox.com/scl/fi/00dodfsnjze5dgxvwmz1v/The.Expendables.3.2014.1080P-Dual-Lat.mp4?rlkey=voy63l0opjyl3mseh2g9l3qme&st=&dl=1"
+    },
+    {
+        titulo: "Jugada Salvaje (2015)",
+        genero: "Acción / Crimen",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/ouhys7nkxy9p7yioqp4rf/juego_salvaje.png?rlkey=ytlmxdob88kh9o0pxbd3glmu7&st=ydo17ssx&dl=1",
+        url: "https://www.dropbox.com/scl/fi/rwr381kv0hrfg7axv8dfw/Jugada.salvaje.2015.1080P-Dual-Lat.mp4?rlkey=5x6qmnvqgblru1ooaoaf3bp8y&st=&dl=1"
+    },
+    {
+        titulo: "Juego Brutal (1986)",
+        genero: "Acción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/6mygtxa13ct2mfrcumb5l/juego_brutal.png?rlkey=mjrmloesjud96slhqeucq7wx7&st=vowxbm9o&dl=1",
+        url: "https://www.dropbox.com/scl/fi/1d6sfasqtut55t387kxph/Juego.Brutal.1986.1080P.Latino.mp4?rlkey=g4fl9xeaznfvzmg5erk81t557&st=&dl=1"
+    },
+    {
+        titulo: "Espía Por Error (2016)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/dux2bj4zqwr69edazofhr/esp-a_por_error.png?rlkey=6sek51jb2k36wc70wee4gfta5&st=207xpyjj&dl=1",
+        url: "https://www.dropbox.com/scl/fi/vgq3i2oqzd2eh8m78fj68/Esp-a.por.error.2016.1080P-Dual-Lat.mp4?rlkey=yik2cmrhp3o79jfq7mvtsrh7b&st=&dl=1"
+    },
+    {
+        titulo: "Hasta Que La Muerte Los Juntó (2014)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/1vsw3ejvcfgjm44vvuz1m/la_muerte_los_junto.png?rlkey=tj4x7fzpfu95vllc3fh4in1v0&st=qkoopo1m&dl=1",
+        url: "https://www.dropbox.com/scl/fi/vf08k2bmsrrk6ybw0l33t/Hasta.que.la.muerte.los.junt-.2014.1080P-Dual-Lat.mp4?rlkey=z3h2guap7lxs9zhlmln0ahjyw&st=&dl=1"
+    },
+    {
+        titulo: "Hercules In New York (1969)",
+        genero: "Aventura / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/jt09vrs11b6kao2t6s3xn/H-rcules_nueva_york.png?rlkey=gwhxejgf5h2qzgxwp1yc8uaq5&st=s3recgif&dl=1",
+        url: "https://www.dropbox.com/scl/fi/0la2tqxk3vy85fgsrx0ps/Hercules.In.New.York.1969.1080p-Dual-Lat.mp4?rlkey=7oq4wwqpzjqj34md9se27z27c&st=&dl=1"
+    },
+    {
+        titulo: "Hércules",
+        genero: "Acción / Aventura",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/fbwsx0na13jrelnevuhm2/H-rcules.png?rlkey=nxtyq48ie4q6mihmcjv9w305t&st=revj8z61&dl=1",
+        url: "https://www.dropbox.com/scl/fi/ecna5gxnm7n4bd3sl1476/H-rcules.1080P.Latino.mp4?rlkey=y4uocgcvs4d44apq6kdp6x8nm&st=&dl=1"
+    },
+    {
+        titulo: "Home Invasion (2016)",
+        genero: "Suspenso / Thriller",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/qycsidcpdgvqq5wo6t5nr/Home.Invasion.png?rlkey=nc9x03h4fci2206qp2zwjgvvp&st=mhb2bqxd&dl=1",
+        url: "https://www.dropbox.com/scl/fi/l5cr5gmrur5slekxml54r/Home.Invasion.2016.1080P-Dual-Lat.mp4?rlkey=c4cofergjmdairjg7zgvvc4bt&st=&dl=1"
+    },
+    {
+        titulo: "Jarhead 3: The Siege (2016)",
+        genero: "Acción / Bélica",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/3ewo4anucoaortl4ifvsp/Jarhead_3_The_Siege.png?rlkey=4r9pmudsxyrlvlmo0gqv6hzxd&st=giu4cpy7&dl=1",
+        url: "https://www.dropbox.com/scl/fi/ad9zfujchmzxts4d2fk05/Jarhead.3.The.Siege.2016.1080P-Dual-Lat.mp4?rlkey=h49hosswvuqhntc74guwumk14&st=&dl=1"
+    },
+    {
+        titulo: "Journey 2: The Mysterious Island (2012)",
+        genero: "Aventura / Ciencia Ficción",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/5iy5zruqtlqz9qt053qih/Journey_2_The_Mysterious_Island.png?rlkey=k4qixj9oiksr4w725r2qokdfa&st=t491ril2&dl=1",
+        url: "https://www.dropbox.com/scl/fi/q5y8aowhy8f2k269cbf50/Journey.2.The.Mysterious.Island.2012.1080p-dual-lat.mp4?rlkey=f723xv9ae8cn4gte2r7dur48l&st=&dl=1"
+    },
+    {
+        titulo: "Monstruos vs Aliens",
+        genero: "Animación / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/ks3nshasscmod134641qi/MONSTRUOS_VS_ALIENS.png?rlkey=p50pvhy8rwh23kmue07ti66q7&st=md8n8x94&dl=1",
+        url: "https://www.dropbox.com/scl/fi/vilyw76bzfk53x0401ktj/Monstruos-vs-aliens-1080p-DUAL-6.83-GB.mp4?rlkey=s2czuizoc2narkxdnp32tpljm&st=&dl=1"
+    },
+    {
+        titulo: "Sonic 3 La Película",
+        genero: "Animación / Acción",
+        calidad: "4K / 60FPS",
+        poster: "https://www.dropbox.com/scl/fi/s21uqco79lgm8m0mbpex6/Sonic_3.png?rlkey=h99z3btzr24nao51m08wq2gy3&st=jbrcbr5p&dl=1",
+        url: "https://www.dropbox.com/scl/fi/y3nechrc8tgl9709ar7yu/Sonic-3-La-Pel-cula-60fps-DUAL-7.76-GB.mp4?rlkey=ja7lhu51unalg0y1k6hj42o0u&st=miuf646y&dl=1"
+    },
+    {
+        titulo: "Barreras (2016)",
+        genero: "Drama",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/syh52rjjekpszwjbly67s/barreras.png?rlkey=8b4uiy8o38b777gx7rtpkwasa&st=d6murtfu&dl=1",
+        url: "https://www.dropbox.com/scl/fi/zlpg1j1g741ky0vr6ssn0/Barreras.2016.1080P-Dual-Lat.mp4?rlkey=6smkz6zn4ojsctjb49h8xajdd&st=t6y2vqtd&dl=1"
+    },
+    {
+        titulo: "Malcolm X (1992)",
+        genero: "Biografía / Drama",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/huaxa4kz5isbfmfhxuilq/Malcolm_X_1992.png?rlkey=pdku9an8gc513lapkay44xjkl&st=ln2btoz9&dl=1",
+        url: "https://www.dropbox.com/scl/fi/bs7u8ezwcri5jzvt4erum/Malcolm.X.1992.1080P-Dual-Lat.mp4?rlkey=5up73h31910kxcd2mnmhnkkzb&st=cbc6w4os&dl=1"
+    },
+    {
+        titulo: "Duelo de Titanes (2000)",
+        genero: "Biografía / Drama / Deporte",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/98rh5dvbclhqagp8gzlrz/duelo_de_titanis.png?rlkey=xotl8k27j3g48ex3dups5wj6v&st=qke4uk5e&dl=1",
+        url: "https://www.dropbox.com/scl/fi/0egbiqmstfj6vromp04zv/Duelo.De.Titanes.2000.1080P-Dual-Lat.mp4?rlkey=repg9wvg3icquehgimxyq6c55&st=xqtpwbvi&dl=1"
+    },
+    {
+        titulo: "El Justiciero: Capítulo Final (2023)",
+        genero: "Acción / Crimen / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/oz70lcp3cbheigxgu3qxa/justiciero.png?rlkey=wquw4bats6ais9wq2ckknf2rz&st=yepkf69v&dl=1",
+        url: "https://www.dropbox.com/scl/fi/alzsgxjhbtppp30ztwejc/El.Justiciero.Cap-tulo.Final.2023.1080P-Dual-Lat.mp4?rlkey=aeanup6u0afq42kwa7mo22z5v&st=zd86jy5h&dl=1"
+    },
+    {
+        titulo: "El Justiciero 2 (2018)",
+        genero: "Acción / Crimen / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/1t01pt3r20b09ivc1qch1/justiciero_2.png?rlkey=hediyz5kysh1wcyblab61sc69&st=0bu6x2hy&dl=1",
+        url: "https://www.dropbox.com/scl/fi/00hp0oqcte2z1ty22e2bc/El.Justiciero.2.2018.1080P-Dual-Lat.mp4?rlkey=1dtkk3i5dkdi8drvp7p0632dz&st=x54zvg85&dl=1"
+    },
+        {
+        titulo: "Hombre en Llamas (2004)",
+        genero: "Acción / Crimen / Drama",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/hh528wy48lpwb9lo1fk0z/hombre_en_llamas.png?rlkey=rn9fsi7xygm4qetjwiykoksky&st=qn41ah0q&dl=1",
+        url: "https://www.dropbox.com/scl/fi/r2if1d7jam8pctc9lbyt1/Hombreenllamas.2004.1080P-Dual-Lat.mp4?rlkey=274xx9q70i4ndgeh4dozp03qd&st=8xnd2fto&dl=1"
+    },
+    {
+        titulo: "The Little Things (2021)",
+        genero: "Crimen / Misterio / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/cmoe083r1oot7hp087k2g/The_little_things.png?rlkey=uj817qhpee5jz94ok3m9k8mg3&st=zdl1mccy&dl=1",
+        url: "https://www.dropbox.com/scl/fi/su7xd3w70k2ie1rq1j4zw/The.little.things.2021.1080P-Dual-Lat.mp4?rlkey=dmgexnkr3epoxys5pdv9dk90c&st=0v8rdrnj&dl=1"
+    },
+    {
+        titulo: "El Camino de Hill",
+        genero: "Drama / Deporte",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/pfdafa35sto7qettp4h1i/el_camino_de_hill.png?rlkey=i21c3hf0a8fipkwe1d6d28ccd&st=ecx1rkmi&dl=1",
+        url: "https://www.dropbox.com/scl/fi/xouax5fmwffhnzjsguhhs/El-Camino-De-Hill-1080p-DUAL-4.23-GB.mkv?rlkey=ku7t0e6q9o5umr4va5p6m4tvf&st=13n9gezk&dl=1"
+    },
+    {
+        titulo: "Comando",
+        genero: "Acción",
+        calidad: "1080P / 60FPS",
+        poster: "https://www.dropbox.com/scl/fi/klcyav0z7q1fbqwg6ktis/comando.png?rlkey=5k6vwdu60pnj12odk7s6e4oyf&st=gd5l6pmm&dl=1",
+        url: "https://www.dropbox.com/scl/fi/1nistfhx6q1deo13gkm8l/Comando-1080p-TRIAL-5.26-GB.mkv?rlkey=dwj3fr6hfn505mmj3e23o1syb&st=bztb1304&dl=1"
+    },
+    {
+        titulo: "Déjà Vu: Cambiando el Pasado (2006)",
+        genero: "Acción / Ciencia Ficción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/wpix62uq0uc2yul0rnp42/cambiando_el_pasado.png?rlkey=e5i8nqsepb14nto4bonk4y6mx&st=u2qh1p33&dl=1",
+        url: "https://www.dropbox.com/scl/fi/94berw3o5ouezrncn9kci/D-ja.Vu.Cambiando.El.Pasado.2006.1080P-Dual-Lat.mp4?rlkey=42trm1j3crjx2v359ucjsa7mg&st=2te4jllp&dl=1"
+    },
+    {
+        titulo: "El Coleccionista de Huesos (1999)",
+        genero: "Crimen / Misterio / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/u3lp08ylps3px4hkhz24z/el_coleccionista.png?rlkey=h440h9x4fjfhln90g2yg5xz94&st=umc6sqsi&dl=1",
+        url: "https://www.dropbox.com/scl/fi/v95rd80macw4hakksdm1f/El.Coleccionista.De.Huesos.1999.1080P-Dual-Lat.mp4?rlkey=ly3ubji2sb4p0pkfribgo3o5n&st=nhvuj72l&dl=1"
+    },
+    {
+        titulo: "El Regalo Prometido (1996)",
+        genero: "Comedia / Familiar",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/9hin3a8jd5y8tjx5bqsjd/el_regalo_prometido.png?rlkey=3t18dpyu2rdwne2zqpba5cboc&st=4s7rad91&dl=1",
+        url: "https://www.dropbox.com/scl/fi/az3n8oj3m2deetivyff5x/El.Regalo.Prometido.1996.1080P-Dual-Lat.mp4?rlkey=e1ld8xfiogj9zhng9m41tyjdv&st=gh7qlxzm&dl=1"
+    },
+    {
+        titulo: "Family Switch (2023)",
+        genero: "Comedia / Familiar",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/ymt56xs5x83fx4p2vk0ig/Family_switch.png?rlkey=0rezyuj30hgqpuz5g8v7g366q&st=3dftghfk&dl=1",
+        url: "https://www.dropbox.com/scl/fi/2j6w4dpvej9o3iwmfws3w/Family.switch.2023.1080P-Dual-Lat.mp4?rlkey=2b6f00s6icww44bdgg4ybpanj&st=xpobwbou&dl=1"
+    },
+    {
+        titulo: "Gemelos (1988)",
+        genero: "Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/6hepdtliu40iqhhp5a8wl/gemelos.png?rlkey=7t3ey1sb6m0nhqocej1wtg6qi&st=ykz6iadv&dl=1",
+        url: "https://www.dropbox.com/scl/fi/y5jbz416obe2r4w2ucted/Gemelos.1988.1080P-Dual-Lat.mp4?rlkey=z4ynljjh98e9u6bohr3zgad4v&st=919pggdb&dl=1"
+    },
+    {
+        titulo: "Un Espía y Medio (2016)",
+        genero: "Acción / Comedia",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/tlz0ke9nmdueru5i0olnx/espia_y_medio.png?rlkey=6eeqbuj6bj55q31bvturma12r&st=5jb7kc37&dl=1",
+        url: "https://www.dropbox.com/scl/fi/v39ja9b6vyfnpgvmkwqnj/Un.Espia.Y.Medio.2016.1080P-Dual-Lat.mp4?rlkey=of1bl7dq1xprhkem3un2forph&st=a1qhnqh4&dl=1"
+    },
+    {
+        titulo: "Escuadrón de la Muerte",
+        genero: "Acción / Bélica",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/rciat1ccffmfhiqa4siyj/escuadr-n_de_la_muerte.png?rlkey=hhe2fm44f7n2t5r8kwmgv595s&st=c6maetk3&dl=1",
+        url: "https://www.dropbox.com/scl/fi/w5av1dtz05c1ehak41839/El-escuadr-n-de-la-muerte-1080p-DUALC-1.40-GB.mp4?rlkey=f39dca2mecl5ifubv6nhvdgvo&st=afn3nkot&dl=1"
+    },
+    {
+        titulo: "Hacia la Libertad",
+        genero: "Acción / Drama",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/k32scp3eya6h04jxw2iin/hacia-_la_libertad.png?rlkey=mo2f4ryxax1jf7kgic7i6vj7o&st=87pkbyef&dl=1",
+        url: "https://www.dropbox.com/scl/fi/vecedum843bmlxglgwa3m/Hacia-la-libertad-1080p-TRIAL-5.02-GB.mkv?rlkey=9fjeqdxynuvpinkikwubuath1&st=piwsxw2n&dl=1"
+    },
+    {
+        titulo: "Rescate Imposible",
+        genero: "Acción / Suspenso",
+        calidad: "1080P",
+        poster: "https://www.dropbox.com/scl/fi/kl1x6zu51q952dqmwfd9u/rescate_imposible.png?rlkey=qik19zh14752960701jl14dxu&st=lc0bdsss&dl=1",
+        url: "https://www.dropbox.com/scl/fi/dgyz9q5gszbwgcsk1jltj/Rescate-imposible-1080p-DUALC-5.09-GB.mkv?rlkey=8dcx08q75zlua6j9di47otsnv&st=3gdu2u4e&dl=1"
+     }
+        ];
+        
+
+        // Catálogo de Series organizado por Temporadas Independientes
+        const listaSeriesVOD = [
+            {
+                titulo: "Avatar: La Leyenda de Aang - Temporada 1",
+                genero: "Animación",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1",
+                episodios: [
+                    {
+                        title: "Episodio 1: El chico en el iceberg",
+                        videoUrl: "https://www.dropbox.com/scl/fi/0fkbimm559z98g8ugvder/Avatar-La-Leyenda-De-Aang-1080p-S01E01.mkv?rlkey=z3l4mavlsq58stevt8ccs9j99&st=2t6my7np&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 2: El regreso del Avatar",
+                        videoUrl: "https://www.dropbox.com/scl/fi/o37hcs4lhoteayk8dlbyv/Avatar-La-Leyenda-De-Aang-1080p-S01E02.mkv?rlkey=2kn16c52b63wgyrizo0e72ej9&st=qs6qbp1i&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 3: El templo aire del sur",
+                        videoUrl: "https://www.dropbox.com/scl/fi/1oxclpw3j6zgcvb35amb3/Avatar-La-Leyenda-De-Aang-1080p-S01E03.mkv?rlkey=69fmkpf1gfemxvutw3e8i3pjb&st=lzlf6ydo&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 4: Las guerreras de Kyoshi",
+                        videoUrl: "https://www.dropbox.com/scl/fi/i8b9unt9ku1e190881y5i/Avatar-La-Leyenda-De-Aang-1080p-S01E04.mkv?rlkey=omnfm1l3r9kbe3i57ys5exktd&st=lr7wv1f7&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 5: El rey de Omashu",
+                        videoUrl: "https://www.dropbox.com/scl/fi/xykm4ueeu6k8jvnbwulea/Avatar-La-Leyenda-De-Aang-1080p-S01E05.mkv?rlkey=3a45td8tx0c851abjnudhxy12&st=xji5ojcq&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 6: Prisioneros",
+                        videoUrl: "https://www.dropbox.com/scl/fi/h9ykvodqi2j3ynqo87l9e/Avatar-La-Leyenda-De-Aang-1080p-S01E06.mkv?rlkey=i0lgbm3pnok67bm8vaz696des&st=bbkeqfpf&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 7: El solsticio, parte 1",
+                        videoUrl: "https://www.dropbox.com/scl/fi/na0x7i8fvr59j115sztkx/Avatar-La-Leyenda-De-Aang-1080p-S01E07.mkv?rlkey=59uym3sl74b9aopuocialv8qk&st=ojciw0c2&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    },
+                    {
+                        title: "Episodio 8: El solsticio, parte 2",
+                        videoUrl: "https://www.dropbox.com/scl/fi/kmf3peqy8ab6iudw9swlv/Avatar-La-Leyenda-De-Aang-1080p-S01E08.mkv?rlkey=1m5ardjyfeu67vbpu833m0e4a&st=rcbpcsbm&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/vqbfjqa8iu7uzd005x8jq/avatar-temporada-01.png?rlkey=eskgey8pza5ihyfst0q1cs5sz&st=64j1kfsf&dl=1"
+                    }
+                ]
+            },
+            {
+                titulo: "Avatar: La Leyenda de Aang - Temporada 2",
+                genero: "Animación",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1",
+                episodios: [
+                    {
+                        title: "Episodio 1: El estado Avatar",
+                        videoUrl: "https://www.dropbox.com/scl/fi/b661cdy4npbfnfqqowtrl/Avatar-La-leyenda-de-Aang-S02E01.mkv?rlkey=xmm6j08lx7lwd2t6ail9tnm3q&st=lit9e4o3&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    },
+                    {
+                        title: "Episodio 2: La cueva de los dos amantes",
+                        videoUrl: "https://www.dropbox.com/scl/fi/i5hfgt9if61jmq594dbx6/Avatar-La-leyenda-de-Aang-S02E02.mkv?rlkey=cduj52oppl1wvhs8zpb7ca8x0&st=kt3xxey1&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    },
+                    {
+                        title: "Episodio 3: Regreso a Omashu",
+                        videoUrl: "https://www.dropbox.com/scl/fi/ml8uc9h9pp4azrwuliypm/Avatar-La-leyenda-de-Aang-S02E03.mkv?rlkey=itvk527loogiuxpewttgxe1sx&st=vimls45w&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    },
+                    {
+                        title: "Episodio 4: El pantano",
+                        videoUrl: "https://www.dropbox.com/scl/fi/iotptdg9relljhizhx9vu/Avatar-La-leyenda-de-Aang-S02E04.mkv?rlkey=a67xaf0zl2sqlilql0hx09uot&st=7e68wj1t&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    },
+                    {
+                        title: "Episodio 5: Día de avatar",
+                        videoUrl: "https://www.dropbox.com/scl/fi/zklx5yj1ame157d9x0pl4/Avatar-La-leyenda-de-Aang-S02E05.mkv?rlkey=ndtyjyed9mycrlxknnkf788xy&st=rrinxp8i&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    },
+                    {
+                        title: "Episodio 6: La ciega bandida",
+                        videoUrl: "https://www.dropbox.com/scl/fi/tmj1l802dkyfphbooe4re/Avatar-La-leyenda-de-Aang-S02E06.mkv?rlkey=esgbqesfqt8cofvcf12fjnek1&st=dh3ncq2q&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    },
+                    {
+                        title: "Episodio 7: Persecución",
+                        videoUrl: "https://www.dropbox.com/scl/fi/4g8n1nohxx3hc6gfyt4m0/Avatar-La-leyenda-de-Aang-S02E07.mkv?rlkey=fnspqquyeu76go03qm88c4y4r&st=mqmqu5a4&raw=1",
+                        posterUrl: "https://www.dropbox.com/scl/fi/5w67lxt6sdk2902lz8bws/avatar-temporada-02.png?rlkey=b9v3wa2bfaizyymnt4uk3djjf&st=kpxgzqb9&dl=1"
+                    }
+                ]
+            },
+            {
+                titulo: "Los Croods",
+                genero: "Animación",
+                calidad: "1080P",
+                poster: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1",
+                episodios: [
+    // PRIMERA TEMPORADA
+    {
+        title: "Temporada 1 - Episodio 1",
+        videoUrl: "https://www.dropbox.com/scl/fi/vlnaayuqh1sftkfove5if/El-rbol-familiar-de-los-Croods-S01E01.mp4?rlkey=d9by15ftfeau1zleq9844behh&st=bbf8wn5c&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 1 - Episodio 2",
+        videoUrl: "https://www.dropbox.com/scl/fi/nfka2y5tw5x4sqz37x8go/El-rbol-familiar-de-los-Croods-S01E02.mp4?rlkey=241bv6qhucrvjxpbylf5yfzqs&st=7oc9e15n&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 1 - Episodio 3",
+        videoUrl: "https://www.dropbox.com/scl/fi/rw78h5yr54dcf6t07ytl3/El-rbol-familiar-de-los-Croods-S01E03.mp4?rlkey=590gsbd15mv9iqpubg0dqfzxa&st=3js9rojc&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 1 - Episodio 4",
+        videoUrl: "https://www.dropbox.com/scl/fi/1tf2gn9xhvs1jha1u92r1/El-rbol-familiar-de-los-Croods-S01E04.mp4?rlkey=5m9hqunhki5qjyccn90q7m20x&st=36mbz272&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 1 - Episodio 5",
+        videoUrl: "https://www.dropbox.com/scl/fi/o78wrej7vur2tpchmyz4b/El-rbol-familiar-de-los-Croods-S01E05.mp4?rlkey=0zp8sja6skikkszsrbrmll7tf&st=3q0xt1mi&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 1 - Episodio 6",
+        videoUrl: "https://www.dropbox.com/scl/fi/c32loge0spcw2izd4o046/El-rbol-familiar-de-los-Croods-S01E06.mp4?rlkey=hjflri249wn5b1a0ismoh65mu&st=xpolsewr&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+
+    // ==========================================
+    // SEGUNDA TEMPORADA
+    // ==========================================
+    {
+        title: "Temporada 2 - Episodio 1",
+        videoUrl: "https://www.dropbox.com/scl/fi/wjrca0r8qa6lyysi1o3hi/El-rbol-familiar-de-los-Croods-S02E01.mp4?rlkey=13rpz5zc37x9vb6y31hb72ir6&st=v2pcyf94&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 2 - Episodio 2",
+        videoUrl: "https://www.dropbox.com/scl/fi/0zlrvxi3lozrrw0fg96kf/El-rbol-familiar-de-los-Croods-S02E02.mp4?rlkey=gtdt8nn4pv0hrlcwdajokz3g4&st=sgfs35wr&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 2 - Episodio 3",
+        videoUrl: "https://www.dropbox.com/scl/fi/673x5woyfzp782tydde8e/El-rbol-familiar-de-los-Croods-S02E03.mp4?rlkey=71hwrvrtns8ixg38u9cgylkov&st=lq1jspyw&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 2 - Episodio 4",
+        videoUrl: "https://www.dropbox.com/scl/fi/ep5t0o1clekctmood6zxh/El-rbol-familiar-de-los-Croods-S02E04.mp4?rlkey=40f1g73dzxsypzhajgmdhexyi&st=me86nkcp&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 2 - Episodio 5",
+        videoUrl: "https://www.dropbox.com/scl/fi/5dfi5n1b8pltzh8hatx89/El-rbol-familiar-de-los-Croods-S02E05.mp4?rlkey=eh1kx3hkwh9r6mwbmuxc755u8&st=ezjlcob0&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 2 - Episodio 6",
+        videoUrl: "https://www.dropbox.com/scl/fi/soknn4edbd3bmruk55gax/El-rbol-familiar-de-los-Croods-S02E06.mp4?rlkey=awuy9q5mo0xhvbqvfaczci55i&st=m2bkpge4&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 2 - Episodio 7",
+        videoUrl: "https://www.dropbox.com/scl/fi/eu7xd6279ap9u3qhh1fl7/El-rbol-familiar-de-los-Croods-S02E07.mp4?rlkey=9js5tavyzus4pibqwjvb8xygt&st=f66bqsnw&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+
+    // ==========================================
+    // TERCERA TEMPORADA
+    // ==========================================
+    {
+        title: "Temporada 3 - Episodio 1",
+        videoUrl: "https://www.dropbox.com/scl/fi/eifprvxae84wvdawahp5r/El-rbol-familiar-de-los-Croods-S03E01.mp4?rlkey=0hn1i99zci4m0fevo2nrd6jym&st=jjqorbkt&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 3 - Episodio 2",
+        videoUrl: "https://www.dropbox.com/scl/fi/3zovi812nveenc6iqssse/El-rbol-familiar-de-los-Croods-S03E02.mp4?rlkey=lholu3h7szz7q4jpz1c3y7ldx&st=7w66i7sb&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 3 - Episodio 3",
+        videoUrl: "https://www.dropbox.com/scl/fi/trttttsifk1rj9jpotqzf/El-rbol-familiar-de-los-Croods-S03E03.mp4?rlkey=t30i91266eoa5p31tflcklnxf&st=xk390nt9&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 3 - Episodio 4",
+        videoUrl: "https://www.dropbox.com/scl/fi/yol8t31j4qkr9b6oshm4q/El-rbol-familiar-de-los-Croods-S03E04.mp4?rlkey=gtkhtvmla44vkqtjbkbzhhvd4&st=i0iky8lc&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 3 - Episodio 5",
+        videoUrl: "https://www.dropbox.com/scl/fi/3tguk0632bf95957b2mio/El-rbol-familiar-de-los-Croods-S03E05.mp4?rlkey=dx3z898pwqykosldvsam0zbnc&st=yf21eqkw&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 3 - Episodio 6",
+        videoUrl: "https://www.dropbox.com/scl/fi/7rh0rd6jbe6jdtgmoq34l/El-rbol-familiar-de-los-Croods-S03E06.mp4?rlkey=byy27h8lw8h10u03nbioeqews&st=0vsl5l6z&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+
+    // ==========================================
+    // CUARTA TEMPORADA
+    // ==========================================
+    {
+        title: "Temporada 4 - Episodio 1",
+        videoUrl: "https://www.dropbox.com/scl/fi/hfqamin8jxx0lwun8uere/El-rbol-familiar-de-los-Croods-S04E01.mp4?rlkey=qzldc4moghqxo2xfbaqovhqcp&st=pco8ujsa&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 4 - Episodio 2",
+        videoUrl: "https://www.dropbox.com/scl/fi/7p73f84wh03kx5g98pjhj/El-rbol-familiar-de-los-Croods-S04E02.mp4?rlkey=6aoazc4abq5r8kzx65zvl2061&st=qovpjw4d&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 4 - Episodio 3",
+        videoUrl: "https://www.dropbox.com/scl/fi/emqs6s71r2086p3jby6wz/El-rbol-familiar-de-los-Croods-S04E03.mp4?rlkey=popgwj0dg6oji40vjzswcwqbi&st=b4j9igco&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 4 - Episodio 4",
+        videoUrl: "https://www.dropbox.com/scl/fi/gbt829tnkvrvzou8fkm1h/El-rbol-familiar-de-los-Croods-S04E04.mp4?rlkey=tdy57d749ywzoyjx8atsl69dx&st=hxkik769&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 4 - Episodio 5",
+        videoUrl: "https://www.dropbox.com/scl/fi/etxbmpw805249wbsu4vms/El-rbol-familiar-de-los-Croods-S04E05.mp4?rlkey=5n9r81qy7p024lujlemgjegrh&st=uow1uymr&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 4 - Episodio 6",
+        videoUrl: "https://www.dropbox.com/scl/fi/wuvvp08iyooa2no0clkcr/El-rbol-familiar-de-los-Croods-S04E06.mp4?rlkey=733rpoi8z2iv2i6frau6263vu&st=u6rh5r8m&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 4 - Episodio 7",
+        videoUrl: "https://www.dropbox.com/scl/fi/coz2zbxgtqwuvo92jkade/El-rbol-familiar-de-los-Croods-S04E07.mp4?rlkey=85gwfd1gqrcni0xhh0zkxxch7&st=2qfj4y8e&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+
+    // ==========================================
+    // QUINTA TEMPORADA
+    // ==========================================
+    {
+        title: "Temporada 5 - Episodio 1",
+        videoUrl: "https://www.dropbox.com/scl/fi/3l16xsonsxlm67hhmms3u/El-rbol-familiar-de-los-Croods-S05E01.mp4?rlkey=5q0gpdwvx01gz29gtkfgqgxxx&st=a7a7wok5&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 5 - Episodio 2",
+        videoUrl: "https://www.dropbox.com/scl/fi/3viobd2f60727moxemce1/El-rbol-familiar-de-los-Croods-S05E02.mp4?rlkey=kql8eth2yga8dp2fecawfulpl&st=e11cylnv&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 5 - Episodio 3",
+        videoUrl: "https://www.dropbox.com/scl/fi/1b5st7a5a3a47v3h6jkep/El-rbol-familiar-de-los-Croods-S05E03.mp4?rlkey=bd93oak0abg85jshme14pow8v&st=rtini53v&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 5 - Episodio 4",
+        videoUrl: "https://www.dropbox.com/scl/fi/m9iocmc6f12t46ve0oye3/El-rbol-familiar-de-los-Croods-S05E04.mp4?rlkey=szh8gvim51pa0td4ai477zgvz&st=qoek8fq2&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 5 - Episodio 5",
+        videoUrl: "https://www.dropbox.com/scl/fi/f5hh1tez9k5k2upbob9eq/El-rbol-familiar-de-los-Croods-S05E05.mp4?rlkey=rg421dgsx4fqwuqmvc6zc3jhh&st=7b7brkbo&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 5 - Episodio 6",
+        videoUrl: "https://www.dropbox.com/scl/fi/n18gwkvs4a05w1a8aly61/El-rbol-familiar-de-los-Croods-S05E06.mp4?rlkey=vmzn8fd4vlmhh9jfonhxq9jso&st=kxfju5id&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+
+    // ==========================================
+    // SEXTA TEMPORADA
+    // ==========================================
+    {
+        title: "Temporada 6 - Episodio 1",
+        videoUrl: "https://www.dropbox.com/scl/fi/ofrx4o250wfhsar6jqssy/El-rbol-familiar-de-los-Croods-S06E01.mp4?rlkey=ggbi15f9ko6end6uya2bsvzsf&st=zjfdv642&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 6 - Episodio 2",
+        videoUrl: "https://www.dropbox.com/scl/fi/ep30nzu2sr13yd2ljx4o5/El-rbol-familiar-de-los-Croods-S06E02.mp4?rlkey=o6h31wck27ofaxpwtsawmlhqy&st=vci4zooe&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 6 - Episodio 3",
+        videoUrl: "https://www.dropbox.com/scl/fi/sa6fcg97yg764ekpilf5s/El-rbol-familiar-de-los-Croods-S06E03.mp4?rlkey=ahyhkif6xrylzj2vtc29nvwmg&st=vaqj5kvi&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 6 - Episodio 4",
+        videoUrl: "https://www.dropbox.com/scl/fi/tpqw4bbuqx1d58qtt9c3i/El-rbol-familiar-de-los-Croods-S06E04.mp4?rlkey=zj7z2nfql4f6tqsgrc5v3lzh2&st=c3upbq6e&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 6 - Episodio 5",
+        videoUrl: "https://www.dropbox.com/scl/fi/3wn3cn9k9xt4n55mor77h/El-rbol-familiar-de-los-Croods-S06E05.mp4?rlkey=ebwggvzrzx1hwa8e95b0bfm1d&st=2p3xcmxf&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 6 - Episodio 6",
+        videoUrl: "https://www.dropbox.com/scl/fi/vmmwrd2qb0pir9j7atopr/El-rbol-familiar-de-los-Croods-S06E06.mp4?rlkey=z9uuxsczdzob6jhoevmatlnvy&st=gu8sm0ug&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    },
+    {
+        title: "Temporada 6 - Episodio 7",
+        videoUrl: "https://www.dropbox.com/scl/fi/lcyt0qr9pzk52hw2ce5vr/El-rbol-familiar-de-los-Croods-S06E07.mp4?rlkey=g88vjdaaqysr3a9h3sdawqspw&st=wqht9n9j&dl=1",
+        posterUrl: "https://www.dropbox.com/scl/fi/meqpiovf4wfcgh18ytap6/familia-croods-series.png?rlkey=tg19j56icbsnlsleyhgk0j1mc&st=hqhne5x6&dl=1"
+    }
+                ]
+            }
+        ];
+
+        let seccionActual = 'peliculas';
+
+        function renderizarGrid(items) {
+            const grid = document.getElementById('vod-grid');
+            grid.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'vod-card';
+                
+                if (seccionActual === 'peliculas') {
+                    card.onclick = () => reproducirPelicula(item);
+                } else {
+                    card.onclick = () => abrirModalTemporada(item);
+                }
+
+                card.innerHTML = `
+                    <div class="vod-number">#${index + 1}</div>
+                    <img class="vod-poster" src="${item.poster}" alt="${item.titulo}" loading="lazy">
+                    <div class="vod-info">
+                        <div class="vod-title">${item.titulo}</div>
+                        <div class="vod-meta">
+                            <span class="vod-badge">${item.calidad}</span>
+                            <span class="vod-genre">${item.genero}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function reproducirPelicula(pelicula) {
+            const container = document.getElementById('playerContainer');
+            const video = document.getElementById('videoPlayer');
+            const titleSpan = document.getElementById('nowPlayingTitle');
+
+            titleSpan.textContent = `Reproduciendo: ${pelicula.titulo}`;
+            video.src = pelicula.url;
+            container.style.display = 'block';
+            video.play();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function abrirModalTemporada(temporadaItem) {
+            document.getElementById('modalSeriesTitle').textContent = temporadaItem.titulo;
+            const episodesContainer = document.getElementById('episodesContainer');
+            episodesContainer.innerHTML = '';
+
+            temporadaItem.episodios.forEach((ep) => {
+                const item = document.createElement('div');
+                item.className = 'episode-item';
+                item.onclick = () => {
+                    reproducirEpisodio(ep);
+                    cerrarModal();
+                };
+
+                item.innerHTML = `
+                    <img class="episode-thumb" src="${ep.posterUrl}" loading="lazy">
+                    <div class="episode-details">
+                        <h4>${ep.title}</h4>
+                        <span>Reproducir Episodio</span>
+                    </div>
+                `;
+                episodesContainer.appendChild(item);
+            });
+
+            document.getElementById('seriesModal').style.display = 'flex';
+        }
+
+        function reproducirEpisodio(ep) {
+            const container = document.getElementById('playerContainer');
+            const video = document.getElementById('videoPlayer');
+            const titleSpan = document.getElementById('nowPlayingTitle');
+
+            titleSpan.textContent = `Reproduciendo: ${ep.title}`;
+            video.src = ep.videoUrl;
+            container.style.display = 'block';
+            video.play();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cerrarModal() {
+            document.getElementById('seriesModal').style.display = 'none';
+        }
+
+        function cerrarReproductor() {
+            const container = document.getElementById('playerContainer');
+            const video = document.getElementById('videoPlayer');
+            video.pause();
+            video.src = '';
+            container.style.display = 'none';
+        }
+
+        function filtrarContenido() {
+            const texto = document.getElementById('searchInput').value.toLowerCase();
+            const generoSeleccionado = document.getElementById('genreSelect').value;
+
+            const baseDatos = seccionActual === 'peliculas' ? listaPeliculasVOD : listaSeriesVOD;
+
+            const filtradas = baseDatos.filter(item => {
+                const coincideTexto = item.titulo.toLowerCase().includes(texto);
+                const coincideGenero = generoSeleccionado === "" || item.genero.includes(generoSeleccionado);
+                return coincideTexto && coincideGenero;
+            });
+
+            renderizarGrid(filtradas);
+        }
+
+        function cambiarSeccion(seccion) {
+            seccionActual = seccion;
+            document.getElementById('moviesBtn').classList.toggle('active', seccion === 'peliculas');
+            document.getElementById('seriesBtn').classList.toggle('active', seccion === 'series');
+            
+            document.getElementById('searchInput').value = '';
+            document.getElementById('genreSelect').value = '';
+
+            const baseDatos = seccion === 'peliculas' ? listaPeliculasVOD : listaSeriesVOD;
+            renderizarGrid(baseDatos);
+        }
+
+        // Inicializar cargando las películas
+        renderizarGrid(listaPeliculasVOD);
+    </script>
+</body>
+</html>
