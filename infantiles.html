@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infantiles TV+ - GLYSTV+</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root { 
+            --primary: #ff8c00; 
+            --secondary: #00d2ff; 
+            --accent-yellow: #f5c518; 
+            --bg: #080808; 
+            --card: #161616; 
+            --text: #fff; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); text-align: center; }
+        
+        header {
+            background: #000;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #E50914;
+            box-shadow: 0 2px 10px rgba(0,0,0,.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .video-box { position: sticky; top: 72px; background: #000; z-index: 999; border-bottom: 3px solid var(--primary); padding-bottom: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
+        #video-container { width: 100%; max-width: 800px; margin: 0 auto; background: #000; }
+        video { width: 100%; aspect-ratio: 16/9; display: block; background: #000; }
+        
+        .current-title { padding: 12px; color: var(--accent-yellow); font-size: 15px; font-weight: bold; }
+        .btn-atras { background: #e50914; color: white; padding: 8px 18px; border-radius: 4px; text-decoration: none; display: inline-block; margin: 5px; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .btn-atras:hover { background: #b20710; }
+
+        .category-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: #111;
+            border-bottom: 1px solid #222;
+        }
+        .cat-btn {
+            background: #222;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .cat-btn:hover, .cat-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+
+        .section-container { max-width: 1400px; margin: 0 auto; padding: 20px; text-align: left; }
+        .section-header { font-size: 20px; color: var(--primary); margin: 25px 10px 15px; border-left: 4px solid var(--primary); padding-left: 10px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; padding: 10px; }
+        .card { background: var(--card); border-radius: 12px; border: 2px solid #222; overflow: hidden; cursor: pointer; transition: 0.25s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 4px 15px rgba(255,140,0,0.3); }
+        .card:active { transform: scale(0.95); }
+        
+        .card-icon { height: 100px; display: flex; align-items: center; justify-content: center; background: #222; font-size: 38px; color: var(--primary); }
+        .card img { width: 100%; height: 140px; object-fit: cover; display: block; }
+        .card-info { padding: 12px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .card-title { font-size: 12px; font-weight: 600; color: #eee; line-height: 1.3; }
+        .tag { font-size: 9px; color: var(--secondary); font-weight: bold; margin-top: 6px; text-transform: uppercase; display: block; }
+    </style>
+</head>
+<body>
+
+<header>GLYSTV+ / Infantil y Educativo</header>
+
+<div class="video-box">
+    <div id="video-container">
+        <video id="mainPlayer" controls playsinline>
+            <source src="" type="video/mp4">
+        </video>
+    </div>
+    <div id="displayTitle" class="current-title">Toca un video o capítulo para iniciar</div>
+    <a href="index.html" class="btn-atras">⬅ VOLVER AL MENÚ</a>
+</div>
+
+<div class="category-nav">
+    <button class="cat-btn active" onclick="filterCategory('all')">🌟 Todo</button>
+    <button class="cat-btn" onclick="filterCategory('grizzy')">🐻 Grizzy & Lemmings</button>
+    <button class="cat-btn" onclick="filterCategory('larva')">🐛 Larva & Oscar</button>
+    <button class="cat-btn" onclick="filterCategory('phineas')">⚙️ Phineas y Ferb</button>
+    <button class="cat-btn" onclick="filterCategory('numberblocks')">🔢 Numberblocks</button>
+    <button class="cat-btn" onclick="filterCategory('kidslearning')">📚 Kids Learning & Inglés</button>
+</div>
+
+<div class="section-container" id="content-sections">
+    <!-- Secciones generadas dinámicamente o por contenedor -->
+</div>
+
+<script>
+    const allContent = [
+        // Grizzy & Lemmings Vol. 2
+        { cat: 'grizzy', t: "Super Voltaic Cabin", u: "https://www.dropbox.com/scl/fi/jd5dqku5lc1n5o3by73q9/Super-Voltaic-Cabin-_-Grizzy-_-the-Lemmings-_-25_-Compilation-_-Cartoon-for-Kids-360P.mp4?rlkey=f3tqmx6jbn6ibqyxosgt2fegp&raw=1", i: "fa-bolt", type: "icon" },
+        { cat: 'grizzy', t: "Skull of Discord", u: "https://www.dropbox.com/scl/fi/yupaftj0psr039hadwdtt/Skull-of-Discord-_-Grizzy-_-the-Lemmings-_-25_-Compilation-_-Cartoon-for-Kids-360P.mp4?rlkey=36j9b4c46llx2q7h6pogkrwfe&raw=1", i: "fa-skull", type: "icon" },
+        { cat: 'grizzy', t: "Sea Excursion", u: "https://www.dropbox.com/scl/fi/v5u5c323nj6j171ug79ju/Sea-Excursion-_-Grizzy-_-the-Lemmings-_-25_-Compilation-_-Cartoon-for-Kids-360P.mp4?rlkey=ft3dsyh8b7pcdd8d3bpr3imm1&raw=1", i: "fa-ship", type: "icon" },
+        { cat: 'grizzy', t: "Odd Job Crab", u: "https://www.dropbox.com/scl/fi/y15373i0cbp0m697qwfw3/Odd-Job-Crab-_-Grizzy-_-the-Lemmings-_-25_-Compilation-_-Cartoon-for-Kids-360P.mp4?rlkey=6my662zi58pvkipuwuvehrdu2&raw=1", i: "fa-hand-peace", type: "icon" },
+        { cat: 'grizzy', t: "Javelin Lemmings", u: "https://www.dropbox.com/scl/fi/ysyw5pep1whgt2e94ff4v/Javelin-Lemmings-_-Grizzy-_-the-Lemmings-_-15_-Compilation-_-Cartoon-for-Kids-360P.mp4?rlkey=aqudvtdfe7318ks3y5025yta2&raw=1", i: "fa-ruler-horizontal", type: "icon" },
+        { cat: 'grizzy', t: "Cabin on Ice", u: "https://www.dropbox.com/scl/fi/wm4synhxvxjffbrr90xas/Cabin-on-Ice-_-Grizzy-_-the-Lemmings-_-25_-Compilation-_-Cartoon-For-Kids-360P.mp4?rlkey=e6qqgs5tlm1rcdpu8gq5frv4w&raw=1", i: "fa-snowflake", type: "icon" },
+        { cat: 'grizzy', t: "Grizzy & Lemmings 20 min - Vol 1", u: "https://www.dropbox.com/scl/fi/8yqlyvgciwyrfrtn3avdb/20-Minutes-of-Grizzy-_-the-Lemmings-Cartoon-Compilation-Full-Episodes-720P_HD.mp4?rlkey=3w3c5e2u0011qorxekie0l7md&raw=1", i: "fa-star", type: "icon" },
+        { cat: 'grizzy', t: "Mini Troubles (Ep. 199)", u: "https://www.dropbox.com/scl/fi/sufmz5ufm7nlxtk0c9gh9/Mini-Troubles-Episode-199-Grizzy-_-the-Lemmings-_-Cartoon-720P_HD.mp4?rlkey=4s126fznndzkjmzk2rofoa85l&raw=1", i: "fa-compress-arrows-alt", type: "icon" },
+        { cat: 'grizzy', t: "Spinning Lemmings (Ep. 190)", u: "https://www.dropbox.com/scl/fi/3tu62fcvpvc718nr1epdw/Spinning-Lemmings-Episode-190-Grizzy-_-the-Lemmings-_-Cartoon-720P_HD.mp4?rlkey=y52ddolggbgkyv060jhht6n9m&raw=1", i: "fa-redo", type: "icon" },
+
+        // Larva & Oscar Películas
+        { cat: 'larva', t: "LARVA - Alimentos Frenzados", u: "https://www.dropbox.com/scl/fi/h6znchmt0qovpxqc66vgy/LARVA-_-ALIMENTOS-FRENZADOS-_-Dibujos-animados-para-ni-os-_-WildBrain-720P_HD.mp4?rlkey=h22wb8maiiht28k1sqlg1nu34&st=iwzjshb4&dl=1", img: "https://www.dropbox.com/scl/fi/ghmqg7skg5xt3g9io095w/1779343993206.png?rlkey=krr4jb0b9weoxo1jpyt95rigj&st=kqaw2wwq&dl=1", type: "img" },
+        { cat: 'larva', t: "LARVA - Yellow Saves The Day", u: "https://www.dropbox.com/scl/fi/vobh8tozqa0qtzrfzblxf/YELLOW-SAVES-THE-DAY_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=twhigwxqv517kjwjax5lec97a&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/x7cv8smablcxhm8p6usx2/A-vertical-9_16-3D-animated-style-poster.-Two-funny-cartoon-larvae-characte_20260521_024012_0000.png?rlkey=x4pmm3pmy3ixb0oyde0tefrsy", type: "img" },
+        { cat: 'larva', t: "LARVA - Larvatar", u: "https://www.dropbox.com/scl/fi/ounwsiwgi5d1vp0hwftoa/LARVATAR_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=pq9y5cqsc8e5s9wtv6qvhzcvu&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/p1e716na5dsfqvns7pj0b/A-vertical-9_16-3D-animated-style-poster.-Two-funny-cartoon-larvae-characte_20260521_024114_0000.png?rlkey=7rmuaizlfwshy4srnglbbanhb", type: "img" },
+        { cat: 'larva', t: "LARVA - Yellow New Girlfriend", u: "https://www.dropbox.com/scl/fi/whxgdwmbtstrz95npr7cf/YELLOW_S-NEW-GIRLFRIEND_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=6p15ip46pt5vq4krt7oufrlrd&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/b605ll1a5yiemuv93pnlh/IMG_20260521_022515.png?rlkey=oqulxhb6pxh8jlnlktlvinmg4", type: "img" },
+        { cat: 'larva', t: "LARVA - This is Bad", u: "https://www.dropbox.com/scl/fi/7ciaax95p9ce94geo8p55/THIS-IS-BAD_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=2xmr6d62qze87hxx4fgfuo0vv&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/89e7a5gj5ttbx4crtx285/IMG_20260521_023219.png?rlkey=yysesv7zi29lawxxopgog7hjw", type: "img" },
+        { cat: 'larva', t: "LARVA - Supersonic Sound", u: "https://www.dropbox.com/scl/fi/4qy3d36za8a2yczc2bczp/SUPERSONIC-SOUND_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=w6dkwkg1e4nj5mie7hm2kvc6k&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/8yxtyvn9oefiq7ockrwsl/IMG_20260521_025608.png?rlkey=un8x0hnee1mkypq8b36hqc58o", type: "img" },
+        { cat: 'larva', t: "LARVA - Super Sonic Speed", u: "https://www.dropbox.com/scl/fi/2ljecyiuxozklhy0atief/Super-Sonic-Speed_-_-Larva-_-Cartoons-For-Kids-_-WildBrain-Kids-720P_HD.mp4?rlkey=o4nlomcilul9st5tapqua44gm&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/9a1n2jyk5mvayrj4a99fe/IMG_20260521_034221.png?rlkey=ih19kfwexw0gze4ln5xk3v7s8", type: "img" },
+        { cat: 'larva', t: "LARVA - Stuck Together", u: "https://www.dropbox.com/scl/fi/772ixhkj49sz7ydyfwo6m/STUCK-TOGETHER_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=9pk7wkltkztmgzzowhe3d13sv&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/qug398p5g2ullok2bgvxy/IMG_20260521_034254.png?rlkey=wl34exq728w4afmm1vlp9vlq5", type: "img" },
+        { cat: 'larva', t: "LARVA - Spider Attack", u: "https://www.dropbox.com/scl/fi/wbl3i39bkij8lfagl9xom/SPIDER-ATTACK_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=ew9dkbp28vychi2t6wd80ukmh&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/7gwuukuultj2ut8mpu3sk/IMG_20260521_034429.png?rlkey=6ssqr5cntbzz5k3we4gwmgpmg", type: "img" },
+        { cat: 'larva', t: "LARVA - Pirate Mayhem", u: "https://www.dropbox.com/scl/fi/ds65xktpcixhudhr0bjff/PIRATE-MAYHEM_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=fzrzewbeyx7g3px9r77xt7zkm&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/d2fj74i2gpngpg1zbuokl/IMG_20260521_034508.png?rlkey=3fz91nr6kltx43wb40itc5el3", type: "img" },
+        { cat: 'larva', t: "LARVA - Ping Pong Mania", u: "https://www.dropbox.com/scl/fi/flumheu32bwbzy79qm1fi/PING-PONG-MANIA_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=5skeggnkjlwuh7yawacic49cm&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/3js6g3vaerwdcfu11lijm/IMG_20260521_034536.png?rlkey=wbyyfk1rwfhg6ip8jz9hde7cp", type: "img" },
+        { cat: 'larva', t: "LARVA - Need for Speed", u: "https://www.dropbox.com/scl/fi/4njjuscirszvknsyvscrw/NEED-FOR-SPEED_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=fgl6iywtdr6mks02r3g5nd72n&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/5z0jr32ztl07qeah3b9fx/IMG_20260521_034611.png?rlkey=vept8bv98u794ug67o1tl0ri7", type: "img" },
+        { cat: 'larva', t: "LARVA - Magical Juice", u: "https://www.dropbox.com/scl/fi/d9y25kq76npth12otqnuh/IMG_20260521_034653.png?rlkey=gi8z4biqpcyt21hnvg57wfa2y", img: "https://dl.dropboxusercontent.com/scl/fi/d9y25kq76npth12otqnuh/IMG_20260521_034653.png?rlkey=gi8z4biqpcyt21hnvg57wfa2y", type: "img" },
+        { cat: 'larva', t: "LARVA - Locked Away", u: "https://www.dropbox.com/scl/fi/q8y96vqm0yxa38brfq4b0/LOCKED-AWAY_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=lw4yni2rp4gu2mrnjzxg50yuy&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/ejojh5gflwztbuzfle9s9/IMG_20260521_034731.png?rlkey=paiunr9ekw0l8dx1jsy5rkbcm", type: "img" },
+        { cat: 'larva', t: "LARVA - Robot Toy", u: "https://www.dropbox.com/scl/fi/ofkb9r2p4ur51pc63gdae/LARVA-ROBOT-TOY-2018-for-kid-720P_HD.mp4?rlkey=lnjijiw3n382mmwz8ma54wm9j&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/2h5c03ddiri5mt57mpnrx/IMG_20260521_034803.png?rlkey=2tu060ckyxtrw3cg2r1i5e0bo", type: "img" },
+        { cat: 'larva', t: "LARVA - Larva Rangers Complete", u: "https://www.dropbox.com/scl/fi/ir7lg5qf7bt18tcomh31u/LARVA-RANGERS_-THE-COMPLETE-SERIES-_-LARVA-_-Cartoons-for-Kids-_-WildBrain-Kids-1080P_HD.mp4?rlkey=0i1nwb2bwl9nii1uw160h7g73&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/cnqlrbg3aulbx9ah8q2mb/IMG_20260521_034836.png?rlkey=ff35varpoimw6y37qbnjbe2y3", type: "img" },
+        { cat: 'larva', t: "LARVA - Larva Rangers 1", u: "https://www.dropbox.com/scl/fi/t7jh50ctv0htdlt4rrt5x/Larva-Rangers-1-_-Larva-1080P_HD.mp4?rlkey=4wdd1870p10detgidx30ircbf&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/j1py4ry1kb7rdeu1wux03/IMG_20260521_035027.png?rlkey=vxavgnz3y6gnnminvhdjagfqe", type: "img" },
+        { cat: 'larva', t: "LARVA - Super Heroes", u: "https://www.dropbox.com/scl/fi/y3ia61t6femp5j4ca001x/LARVA-SUPERH-ROES-_-Dibujos-animados-para-ni-os-_-WildBrain-720P_HD.mp4?rlkey=fwwnjperrulh7o7gnlgce9nj2&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/l5u9exftv258dy6gn0j63/IMG_20260521_035107.png?rlkey=re6xgh6kp7zhmhq21g7inw4ou", type: "img" },
+        { cat: 'larva', t: "LARVA - Grape Wars", u: "https://www.dropbox.com/scl/fi/d3ns9ighhg7qkwejg1zv/GRAPE-WARS_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=labodluanzsy3nxtm56kk16pn&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/r7kago78aht4dypt912ro/IMG_20260521_035144.png?rlkey=59w6zkujdj5uws5n4xarhrwo3", type: "img" },
+        { cat: 'larva', t: "LARVA - Galaxy Wars", u: "https://www.dropbox.com/scl/fi/zwhd5di7o5mduu0xwhn09/GALAXY-WARS_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=yyedjz4037xi8ejxzg26viab6&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/b1c52dkegjnz4iva32qkb/IMG_20260521_035223.png?rlkey=4ioa01r88cwv0tea8kz4ux2to", type: "img" },
+        { cat: 'larva', t: "LARVA - Fuzzy Friend", u: "https://www.dropbox.com/scl/fi/izcr56n82tuixdjfmm8m7/FUZZY-FRIEND_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=tku51cbql45grvrebc5i43fkx&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/ydt4b949qbaccqsarzee3/IMG_20260521_035253.png?rlkey=ct1btw8xyz7zqvkqzswiju2jd", type: "img" },
+        { cat: 'larva', t: "LARVA - Funny Guy", u: "https://www.dropbox.com/scl/fi/ibax0vkrq98v057m7uab8/FUNNY-GUY_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=qzn8nac4gjbblie8mhn56z90z&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/a866fuwiz4t6wfmu3ze1f/IMG_20260521_035335.png?rlkey=k9ldhd307qkych7yb7smwpdsj", type: "img" },
+        { cat: 'larva', t: "LARVA - Chili Disaster", u: "https://www.dropbox.com/scl/fi/ip5kle8c9cg16p7vqqj2j/CHILI-DISASTER_-_-LARVA-_-Cartoons-For-Kids-_-WildBrain-Kids-720P_HD.mp4?rlkey=7v0sfej739lvj8y6riayzzmr2&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/c4777jcwfpq90n1mqvwoe/1779361493201.png?rlkey=fbtx80sv53bkwdxdd20qkc8cm", type: "img" },
+        { cat: 'larva', t: "LARVA - Angry Red", u: "https://www.dropbox.com/scl/fi/obg40brnvkod7p3xecj3c/ANGRY-RED_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=mm8bql7cbeq1xfju0trmt204q&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/eyutrs3kh29jdlcswsnas/1779361593831.png?rlkey=o5264g26off9o7534dl5ztlg2", type: "img" },
+        { cat: 'larva', t: "LARVA Incoming Jet", u: "https://www.dropbox.com/scl/fi/5h3ob49u5zffd2uanqfxm/Incoming-Jet_-_-LARVA-_-WildBrain-Kids-720P_HD.mp4?rlkey=pld7mcin7m460m9o1emzmdttz&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/u02ryr3fej0dvz6danr35/1779361619993.png?rlkey=9o39ea8sst98y0x70y81isdks", type: "img" },
+        { cat: 'larva', t: "LARVA Superhéroes", u: "https://www.dropbox.com/scl/fi/gad6ivhgn89il9u5z4mqe/LARVA-_-supereroi-_-Cartoni-animati-per-bambini-_-WildBrain-720P_HD.mp4?rlkey=durqel4k7axqf1cpt8rdblh8m&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/9dyvgrt2ognklz58x0p30/1779361676178.png?rlkey=yn1ozarzzics9upj1114zl2kw", type: "img" },
+        { cat: 'larva', t: "LARVA Episodio 450", u: "https://www.dropbox.com/scl/fi/0mrdza2g1uu7hjmu0gdj5/LARVA-BAGIAN-2-EPISOD-450-Kartun-Larva-Terbaru-2026-Kartun-3D-SMToonEntertainment-720P_HD.mp4?rlkey=56e1l07l2trp0atxd6qs7ug06&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/rc07ofm6cre33pu8yfviu/1779361992554.png?rlkey=ca0gew0p16604nchvn8u7uqio", type: "img" },
+        { cat: 'larva', t: "Oscar Kim", u: "https://www.dropbox.com/scl/fi/0fu3znodps21hpmmwnnxq/Oscar-llerde-_-lk-B-l-m-Oscar-Kim_-_-Minika-1080P_HD.mp4?rlkey=decv7peszzgypxfa6bzsbkrrn&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/bjgwtyisdwshphxi5mc2f/1779362058759.png?rlkey=hepq88oopql7fco0a4i0y1236", type: "img" },
+        { cat: 'larva', t: "Anla Ma Tamam", u: "https://www.dropbox.com/scl/fi/lvfi6mfdurbqe9a94z563/Oscar-llerde-_-Anla-ma-Tamam_-_-Minika-1080P_HD.mp4?rlkey=csn38o9ff2u13vv4qxlf1cs3i&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/uhfdwfcfqfsw3icf4fqgb/1779362128239.png?rlkey=5jmravab1bg5ubh8no0tt0slf", type: "img" },
+        { cat: 'larva', t: "Oscar Kayboluyor", u: "https://www.dropbox.com/scl/fi/xzvkrc87wvxtb3ymiesyf/Oscar-llerde-_-Oscar-Ka-yor_-_-Minika-1080P_HD.mp4?rlkey=katqhvlm04wcjgfil7npm2jx6&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/jvchfj7zjqa5ga1enmwiv/1779362201656.png?rlkey=unqtk7wi2c7fxmcsyn45hgsxn", type: "img" },
+        { cat: 'larva', t: "Oscar Se Esconde", u: "https://www.dropbox.com/scl/fi/jhxnslwj5ew395cnj7er0/Oscar-llerde-_-Oscar-Saklan-yor_-_-Minika-1080P_HD.mp4?rlkey=lx1l7u65y4pjcfuwt08oq8al3&dl=1", img: "https://dl.dropboxusercontent.com/scl/fi/x7cv8smablcxhm8p6usx2/A-vertical-9_16-3D-animated-style-poster.-Two-funny-cartoon-larvae-characte_20260521_024012_0000.png?rlkey=x4pmm3pmy3ixb0oyde0tefrsy", type: "img" },
+
+        // Phineas y Ferb
+        { cat: 'phineas', t: "Yippy Ki Yi Yay", u: "https://www.dropbox.com/scl/fi/mc8bv3x30x61s8r0x17ww/Yippy-Ki-Yi-Yay-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=bp87uzbvf54wmevvpud21jafc&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Vueltas y Vueltas", u: "https://www.dropbox.com/scl/fi/igczn5z02gfrm8u4h2m2b/Vueltas-y-Vueltas-Dan-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=rh0kl3abnxh76t3ys76khb436&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Viaje De Bodas", u: "https://www.dropbox.com/scl/fi/57to0g8hdzs68gnjcjrz7/Viaje-De-Bodas-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=guyj8hky38xwc1h9bjtk7rzte&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Una Amiga Mejor", u: "https://www.dropbox.com/scl/fi/h25xum2q8u77nbslgimlz/Una-Amiga-Mejor-Phineas-y-Ferb-1080-X-1920.mp4?rlkey=ujyqm44q9ye6b3h459n6zgto3&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Un Susto A Ti Te Caería Muy Bien", u: "https://www.dropbox.com/scl/fi/ni2kootyps12n3nqcfehh/Un-Susto-A-Ti-Te-Caeria-Muy-Bien-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=fr5ajo6e3274mf0yxkikgxdqu&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Un Sabor Lunar", u: "https://www.dropbox.com/scl/fi/q7ezz18ubuom5jj7rijbs/Un-Sabor-Lunar-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=ta4xj9oap8wa3rgo02ih05jb7&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Un Cohete Pronto Volar", u: "https://www.dropbox.com/scl/fi/46ye4aog2fdnlki4dz03d/Un-Cohete-Pronto-Volar-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=dv5jrkgw0hhw5kgchlv5gd64r&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Tu No Eres Ferb", u: "https://www.dropbox.com/scl/fi/9b9a7ajffhv7bgzjb9itk/Tu-No-Eres-Ferb-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=hm9h2lc8xcyod0yxwtns40cjo&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Todo Terreno Es", u: "https://www.dropbox.com/scl/fi/mz9uz1iv0qx0859ywuoqf/Todo-Terreno-Es-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=cqeq7ypmry9iychse7yy9lhd3&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Te Daré Una Explicación", u: "https://www.dropbox.com/scl/fi/s7g7oi0yg8fs2kynk2h2d/Te-Dar-Una-Explicaci-n-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=ssf9sy0vc570zcbu7zffr7uy0&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Tal Vez No Eres Mal Papá", u: "https://www.dropbox.com/scl/fi/ate921urcnd3vjonzvax4/Tal-Vez-No-Eres-Mal-Pap-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=fsw9j87fj6sn7ebh35ri6314c&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Sueños Hechos Puré", u: "https://www.dropbox.com/scl/fi/cwr2vpdrp21b045ckjd3d/Sue-os-Hechos-Pure-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=zgd8rl892iw037zmjkfroaz9c&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Soy Yo", u: "https://www.dropbox.com/scl/fi/ti8zavttsfij2yri4fryc/Soy-Yo-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=7mf07jnxqd4g41tayokrcqecc&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Soy Lindana Instrumental", u: "https://www.dropbox.com/scl/fi/qw1k9dkz9gxzxkqtx65pc/Soy-Lindana-y-Amo-La-Diversi-n-Instrumental-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=qi6xev6rlaajkuxktfes3zlcr&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Solo Tú y Yo", u: "https://www.dropbox.com/scl/fi/p0ips3piaxi18nv5f41ez/Solo-T-y-Yo-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=7wxcwtz7w4zo57d1vulz6u2hh&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Sin Rumbo Ir Es Divertido", u: "https://www.dropbox.com/scl/fi/ls3b1c7z3uga857zzqgb5/Sin-Rumbo-Ir-Tambien-Es-Divertido-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=m32s75d24bksm3egjtjgsvv0r&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Si Muy Chico Estas", u: "https://www.dropbox.com/scl/fi/yqydqyu4u1rfd7l5raeq7/Si-Muy-Chico-Estas-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=ktn7lqqnmmnxciefqf2jxib8s&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Si A Mi Maestra Impresiono", u: "https://www.dropbox.com/scl/fi/qlnefrjyo3ldf44r6nz56/Si-A-Mi-Maestra-Impresiono-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=7mrf39b5qm2bm20jr0pj5tbog&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Sentimiento Navideño", u: "https://www.dropbox.com/scl/fi/fhctcdzp9hwrct3zxfa69/Sentimiento-Navide-o-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=61nmttpn6796vfkz07v1ca1bm&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Romance En El Mar", u: "https://www.dropbox.com/scl/fi/dvme04g0tmya0rp2kjbru/Romance-En-El-Mar-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=pllu000dtd9ezxdj0w6l84cqf&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Rodeo De Robots", u: "https://www.dropbox.com/scl/fi/9uc3vieuuy4l5mkfb0haw/Rodeo-De-Robots-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=32h9pb0v6k7wn62f07t14ab3l&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Rindete", u: "https://www.dropbox.com/scl/fi/rjnv9w720glkq4wk2uhab/Rindete-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=xwqmjp1btxz0r92mfk4iif0kg&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Qué Hicimos Mal", u: "https://www.dropbox.com/scl/fi/p99e5tse2eacn7ajamaiy/Qu-Hicimos-Mal-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=dwan9p27p74acbbfk0kx9dpmo&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Qué Están Haciendo", u: "https://www.dropbox.com/scl/fi/gp87fstobwz2c88xsdccn/Qu-Est-n-Haciendo-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=k4fb3azg9233297kctujzzudo&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Qué Es Lo Que Hace", u: "https://www.dropbox.com/scl/fi/ylc0l0u8gc3de9a6b5rpp/Qu-Es-Lo-Que-Hace-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=irm6hjpr8jpjnawv3kre0r83h&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Que Buena Vida", u: "https://www.dropbox.com/scl/fi/cha47dkaudf432t53jj20/Que-Buena-Vida-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=qa48fkwi1sd7802ow0zvx0dfq&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Por El Submarino", u: "https://www.dropbox.com/scl/fi/efseqlsovvol55prgpqla/Por-El-Submarino-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=l3jwgpvfgy0oy5x8dgxofvu14&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Piso Tras Piso", u: "https://www.dropbox.com/scl/fi/z7jzwdlwoguojmvw3ayjl/Piso-Tras-Piso-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=ext9xx6wpdlip8xpnxi1zjhpq&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Nuevo Amigo (Película)", u: "https://www.dropbox.com/scl/fi/6xbisn6xhh1i3i46yvhq0/PHINEAS-Y-FERB.-La-Pel-cula.-Un-Nuevo-amigo-encontr-Doofenshmirtz-236-X-426.mp4?rlkey=2k3lj6dohaaiizqojvghv143z&dl=1", i: "fa-film", type: "icon" },
+        { cat: 'phineas', t: "Opening Especial Navidad", u: "https://www.dropbox.com/scl/fi/66py9ih8np0nkmus6fpa7/Phineas-y-Ferb-Especial-De-Navidad-Intro-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=cmqysy4y5ol4rztb0jlr2ejbz&dl=1", i: "fa-play", type: "icon" },
+        { cat: 'phineas', t: "Opening Oficial", u: "https://www.dropbox.com/scl/fi/gq49qdpem6hn5mafj415s/Phineas-y-Ferb-Opening-HD-1080-X-1920.mp4?rlkey=hz47qx4pe18d4w6jisootrtmh&dl=1", i: "fa-play", type: "icon" },
+        { cat: 'phineas', t: "Sólo intento Ayudar", u: "https://www.dropbox.com/scl/fi/nk05oaofxnj4g0g3vsk06/Phineas-y-Ferb-S-lo-intento-Ayudar-Espa-ol-Latino-720-X-1280.mp4?rlkey=xted13ahk8j455g9amfsjvdmk&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mi Auto Ideal", u: "https://www.dropbox.com/scl/fi/jbqud6qp1bsapwnb917is/Phineas-y-Ferb-Mi-auto-ideal-Espa-ol-Latino-720-X-1280.mp4?rlkey=55byllu139u1rar3nmo8heas8&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Oportunidad de estar Juntos", u: "https://www.dropbox.com/scl/fi/xca0hqwzbon70zy3yfzyp/Phineas-y-Ferb-La-Oportunidad-de-estar-Juntos-Gracias-por-Prestar-su-Atenci-n-Espa-ol-Latino-720-X-1280.mp4?rlkey=qzrmo3cyhmg2qblesoruiwky3&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Candace Fiesta", u: "https://www.dropbox.com/scl/fi/mkny5qhz60oqlb1e8y6dl/Phineas-y-Ferb-Candace-Fiesta-Espa-ol-Latino-720-X-1280.mp4?rlkey=gtmhkc833cv14pql70p2w1a1t&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Ciudad del Amor", u: "https://www.dropbox.com/scl/fi/4smxmu7pgnjxp8gxt5epo/Phineas-Ferb-Ciudad-del-amor-En-espa-ol-720-X-1274.mp4?rlkey=6lgn7hb0hp5sbki2b4wkc8gip&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Pato Momo A Mi Llegó", u: "https://www.dropbox.com/scl/fi/zc3cs1nubdjazbpwa3jk0/Pato-Momo-A-Mi-Lleg-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=l337apfrc05hrojpdvhjl8a1x&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Pastel De Carne", u: "https://www.dropbox.com/scl/fi/us8l5u1v7bwmaf5prilmm/Pastel-De-Carne-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=05ye32lpwm8ds8n3pbyhot8wn&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mi Hermano Y Yo", u: "https://www.dropbox.com/scl/fi/an7ccgfhg2cagsgqjj6eb/Mi-Hermano-Y-Yo-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=dz8gcjg4neoiugupnkwxzfwsa&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Me Voy", u: "https://www.dropbox.com/scl/fi/rzvw3jf93aibdbvrp4p0g/Me-Voy-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=bnz3bm3yuu8742okv0umsbygd&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Luchando Con Robots", u: "https://www.dropbox.com/scl/fi/09b2elst8t1cnvkkn4kvr/Luchando-Con-Robots-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=gge3yj51ru07n87uzb3clsi6n&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Llegando A Tokyo", u: "https://www.dropbox.com/scl/fi/ckcbfygwlyu3slbb7eiyq/Llegando-A-Tokyo-Phineas-y-Ferb-HD-Excelente-Calidad-1080-X-1920.mp4?rlkey=ldlhmg639jvtk27qvklokgbd7&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "La Casa De La Risa", u: "https://www.dropbox.com/scl/fi/ktsnnizxcw8afa7hvyhox/La-Casa-De-La-Risa-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=qa8eifunajii3nwq72yafpza4&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Canción Guardianes", u: "https://www.dropbox.com/scl/fi/kh35ae00bz40cxvhxvrzw/La-Canci-n-De-Los-Guardianes-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=warirumjfgpjvfbti4ie9bx4c&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Batidora Social", u: "https://www.dropbox.com/scl/fi/y1rk2muuutov4csa1pemo/La-Batidora-Social-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=8in77xmq2x9u75whgnukjuu7b&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Yo Quiero Mi Graduación", u: "https://www.dropbox.com/scl/fi/dlvvojol07cl0rgcstcxn/Yo-Quiero-Mi-Graduaci-n-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=im11d09yonvsu3osewi4y39f8&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Verano Dónde Empezar", u: "https://www.dropbox.com/scl/fi/3hzau69hq1nm0hoxmdzzh/Verano-Por-Donde-Hay-Que-Empezar-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=z3up14y6k7wpvflcezry3n656&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Una Nueva Realidad", u: "https://www.dropbox.com/scl/fi/0gkrjzevy35jfdr43u72j/Una-Nueva-Realidad-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=5xfb39q3087oyt4nagnwfw097&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Un Nuevo Amigo Soy Yo", u: "https://www.dropbox.com/scl/fi/z8t2leuu58g87eimfc27s/Un-Nuevo-Amigo-Enocontr-Y-Soy-Yo-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=3vz43o6vci7foe65htcs317aq&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Un Misterioso Poder", u: "https://www.dropbox.com/scl/fi/wmwjbimajakifzgi0i37g/Un-Misterioso-Poder-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=drjgsu20k1t3xv4ry9fudsecp&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Un Chico De Verdad", u: "https://www.dropbox.com/scl/fi/hlwnnf7wmyzdfcqvh4jig/Un-Chico-De-Verdad-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=wxppz9iyx8km6vq44nyn1ghmm&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Tuyo El Verano Es", u: "https://www.dropbox.com/scl/fi/pxbtyb4zxhbqdv1dmx33p/Tuyo-El-Verano-Es-Excelente-Calidad-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=b6fm5adjnmhg7y8gzc4yq3rtt&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Todo Mejora Con Perry", u: "https://www.dropbox.com/scl/fi/p6sde645u1ts4df5e8ndd/Todo-Mejora-Con-Perry-Phineas-y-Ferb-A-Trav-s-De-La-Segunda-Dimensi-n-HD-1080-X-1920.mp4?rlkey=3vg2p7gt86oobr04kx8f40gky&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Soy Lindana (Original)", u: "https://www.dropbox.com/scl/fi/uf0gbe4f1trnwgh77nxtx/Soy-Lindana-y-Amo-La-Diversi-n-Lindana-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=3415y8s8sjcx3tpx84rr4md91&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Son Niños Malos", u: "https://www.dropbox.com/scl/fi/lpcdjdbtjruwlwxlfmrqt/Son-Ni-os-Malos-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=5butx58ur29yqjqzj2olw5oyr&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Son Malos (Extendida)", u: "https://www.dropbox.com/scl/fi/9te91odx6dhzs37dav2ep/Son-Malos-Versi-n-Extendida-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=01kqiv6h08mbfjfbs7ej1l7m6&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "El Verano Tuyo Es P11", u: "https://www.dropbox.com/scl/fi/dl5w73ecm9mrkvfv1551n/Phineas-y-ferb-El-verano-tuyo-es-temporada-2-parte-11-360-X-640.mp4?rlkey=iyph6w4qo650erpve5tdondeq&dl=1", i: "fa-film", type: "icon" },
+        { cat: 'phineas', t: "El Verano Tuyo Es P10", u: "https://www.dropbox.com/scl/fi/pqrdwo58xabc6u9c80ndb/Phineas-y-ferb-El-verano-tuyo-es-temporada-2-parte-10-240-X-426.mp4?rlkey=wby4juz2haonm8k1otjdo51c0&dl=1", i: "fa-film", type: "icon" },
+        { cat: 'phineas', t: "El Verano Tuyo Es P9", u: "https://www.dropbox.com/scl/fi/rrczs553w1ml4opyaqqej/Phineas-y-ferb-El-verano-tuyo-es-temporada-2-parte-9-240-X-426.mp4?rlkey=uv0ssjswt0ogoh63i4oayh8aj&dl=1", i: "fa-film", type: "icon" },
+        { cat: 'phineas', t: "El Verano Tuyo Es P8", u: "https://www.dropbox.com/scl/fi/otsnf2yjzgdwsmmkumjon/Phineas-y-ferb-El-verano-tuyo-es-temporada-2-parte-8-360-X-640.mp4?rlkey=g3hwh3murqum6ftrjdmoxtutu&dl=1", i: "fa-film", type: "icon" },
+        { cat: 'phineas', t: "Pato Momo", u: "https://www.dropbox.com/scl/fi/oky2a9wmi1ojrlz1iwjvq/Pato-Momo-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=7etlnix5dd0kffqmovepz67uv&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Oxidado", u: "https://www.dropbox.com/scl/fi/1wnxysyt1o6r8cwy452j9/Oxidado-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=cs9gon5h14229bbwngk4k1v9m&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "No Hay Dulces Dentro", u: "https://www.dropbox.com/scl/fi/htjzszopzddovmpropfas/No-Hay-Dulces-Dentro-De-Mi-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=acy1l7ymts9w6pb3x12j67f0z&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "No Eres Muy Joven Ingeniero", u: "https://www.dropbox.com/scl/fi/vnqkq9kha19nm0f87n9zr/No-Eres-Muy-Joven-Para-Ser-Un-Ingeniero-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=chplhjuztzklc4f8cuam7clcs&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Navidad No Odio", u: "https://www.dropbox.com/scl/fi/d2svt946vwvnpzxeyw50p/Navidad-No-Odio-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=c1dih6z6lazfyef5eikfw21kq&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Monstruo Gelatinoso", u: "https://www.dropbox.com/scl/fi/byceno3niihttvzwfdz1z/Monstruo-Gelatinoso-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=g9ia96d8qmy3diltt02gyyxdq&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mis Botas Rojas", u: "https://www.dropbox.com/scl/fi/50y3v2zxo5g2yljkym8xv/Mis-Botas-Rojas-de-Plastico-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=jge63gssqv2p5n9ph70hj7ma9&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mi Viaje Estelar", u: "https://www.dropbox.com/scl/fi/8xfx5grvx685ereseve3i/Mi-Viaje-Estelar-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=2i3ygrum06hmyspmzct25gqes&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mi Némesis", u: "https://www.dropbox.com/scl/fi/mtxbshaexj62lrw0pxgkd/Mi-Nemesis-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=ikm3o0ec318zg1lscw9iup6b1&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mi Deseo Vegetal", u: "https://www.dropbox.com/scl/fi/bgdxaght1nuxqfe8t3s32/Mi-Deseo-Vegetal-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=9ua0gmrdo481zobmbgsr3i8zt&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mi Bravucón", u: "https://www.dropbox.com/scl/fi/0t8hli77jid8xo2ik5f8n/Mi-Bravuc-n-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=cxu3w7z2zra5nldrqlqegc5rg&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Me Obedecerán Vaquera", u: "https://www.dropbox.com/scl/fi/vurhftmueout8kpl51s23/Me-Obedecer-n-A-La-Manera-Vaquera-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=nkngdt5aq82lcfa82pex8dgvk&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mamá Mira", u: "https://www.dropbox.com/scl/fi/r3l9maoofpj3pfqsjem8p/Mam-Mira-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=av4pgijxlri4zoxhsjhpng3cb&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Mamá Remix", u: "https://www.dropbox.com/scl/fi/r3lcflk5ehe13qd9yh3ub/Mam-Remix-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=szwjxm69sx2ua4sovym67soj2&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Malvado Amor", u: "https://www.dropbox.com/scl/fi/9tcsm3859p3fp6xww7xms/Malvado-Amor-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=2mfodzfgz6uv09z2dgebhglea&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Lo Digital Llegó", u: "https://www.dropbox.com/scl/fi/ufezcqnpr8wltvv5m0f91/Lo-Digital-Lleg-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=drdsdt42e1z0jlw10mr8sxi0z&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Llegando a Tokyo (V2)", u: "https://www.dropbox.com/scl/fi/3ntrtnyz9uu9i20tajg9j/Llegando-a-Tokyo-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=uf6omtybqnlfpmzbmpjnm3m8b&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Llega La Navidad", u: "https://www.dropbox.com/scl/fi/l2poalx669utb8k9lah7j/Llega-La-Navidad-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=srh90y5k1p6uial7bb7fi6nji&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Les Va A Ir Mal", u: "https://www.dropbox.com/scl/fi/5lhsaiq9ismtsvlao6swe/Les-Va-A-Ir-Mal-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=877k2lfp3b2ff3b4cpcudouvr&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "La Naturaleza Ganó", u: "https://www.dropbox.com/scl/fi/d0evs9vk0dey5eidzhpra/La-Naturaleza-Gan-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=trdzg5tcpi5bgde8pnha8f03w&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "La Montaña Rusa", u: "https://www.dropbox.com/scl/fi/570t5ywmw4sp557wc9ihg/La-Monta-a-Rusa-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=7z7cs48gwa5hrkgtv6akk2g79&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "La Mejor Visión", u: "https://www.dropbox.com/scl/fi/mewqoraa4s4o2eekra717/La-Mejor-Visi-n-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=wjiu47zynurl34trg6voezkbu&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "La Ciudad Del Amor", u: "https://www.dropbox.com/scl/fi/71ioel1oqm0nidp4vyxdd/La-Ciudad-Del-Amor-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=rn29je6nojzdh91htvhclvwm5&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Yo Quiero Ser Especial", u: "https://www.dropbox.com/scl/fi/leeodtgrx8sejyv4vi96c/Yo-Quiero-Ser-Especial-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=f7sdtksc22qtpslmgr1av5nmi&dl=1", i: "fa-music", type: "icon" },
+        { cat: 'phineas', t: "Yo Mi Misma Y Yo", u: "https://www.dropbox.com/scl/fi/lx5fwz6kgp5pbw9he2l52/Yo-Mi-Misma-Y-Yo-Phineas-y-Ferb-HD-1080-X-1920.mp4?rlkey=9rbmqo3px4t2si26sixabazxa&dl=1", i: "fa-music", type: "icon" },
+
+        // Numberblocks
+        { cat: 'numberblocks', t: "Números acabados en 9", u: "https://www.dropbox.com/scl/fi/mg7gboynlpjd8npskexy3/Numeros-acabados-en-9-Club-0-9-_-Aprende-a-contar-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=18tzd0gwfdp8uomnh337p7mjz&raw=1", i: "fa-list-ol", type: "icon" },
+        { cat: 'numberblocks', t: "El Escuadrón Escalón", u: "https://www.dropbox.com/scl/fi/lya8bn16g88gtxj0qvjy2/EL-ESCUADR-N-ESCAL-N-_-Aprende-a-contar-_-Matem-ticas-para-ni-os-_-_Numberblocks-en-espa-ol-720P_HD.mp4?rlkey=h7o38bwccwbmsgwju2qxc33qj&raw=1", i: "fa-stairs", type: "icon" },
+        { cat: 'numberblocks', t: "El Club de los Veinte 2.0", u: "https://www.dropbox.com/scl/fi/9kn04zt9ujp01tfpgzloy/El-Club-de-los-Veinte-2-0-_-Aprende-a-contar-Numberblocks-Episodios-completos-en-espa-ol-720P_HD.mp4?rlkey=7x87cl55vyni09i1jbpsb1rv2&raw=1", i: "fa-users", type: "icon" },
+        { cat: 'numberblocks', t: "Club de Números Pares", u: "https://www.dropbox.com/scl/fi/0aoz2lxnlvtjwezbi3lxb/El-Club-de-los-N-meros-Pares-_-Dibujos-animados-de-matem-ticas-para-ni-os-_-Numberblocks-en-espa-ol-720P_HD.mp4?rlkey=s08xw3tc46bhisys3aofrabdj&raw=1", i: "fa-divide", type: "icon" },
+        { cat: 'numberblocks', t: "Club Tres", u: "https://www.dropbox.com/scl/fi/m7h41ckhqvtsicn93fywg/Club-Tres-_-Dibujos-animados-de-matem-ticas-123-_-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=vawedwfzbg1p2jmm0zhkg7i8x&raw=1", i: "fa-cubes", type: "icon" },
+        { cat: 'numberblocks', t: "Club de 13", u: "https://www.dropbox.com/scl/fi/ug5bcizxmfq3jhcmq63mm/Club-que-se-desmorona-_-Hecho-de-13-_-Matem-ticas-para-ni-os-_-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=0ni7jw23db6jqffv5polqnvja&raw=1", i: "fa-puzzle-piece", type: "icon" },
+        { cat: 'numberblocks', t: "Club Principal", u: "https://www.dropbox.com/scl/fi/fo5p0uh1y8uqxwvacjrw9/Club-Principal-_-123-Matem-ticas-para-ni-os-_-Episodios-completos-_-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=5sczp1tlf6sjuvkc190ts3ohs&raw=1", i: "fa-star", type: "icon" },
+        { cat: 'numberblocks', t: "Club de los Impares", u: "https://www.dropbox.com/scl/fi/jxs9wl9gfjnejs4jij1ra/Club-de-los-Impares-_-Matem-ticas-coloridas-para-ni-os-123-_-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=fk1wjc1u00c9woa826mdebtlt&raw=1", i: "fa-shapes", type: "icon" },
+        { cat: 'numberblocks', t: "Club de Fútbol", u: "https://www.dropbox.com/scl/fi/cipqgg56zah6plvs9n9k9/Club-de-F-tbol-Episodios-completos-_-Dibujos-animados-de-matem-ticas-para-ni-os-_numberblocks_es-720P_HD.mp4?rlkey=0aidaricj8by2f40ptvr71yrv&raw=1", i: "fa-futbol", type: "icon" },
+        { cat: 'numberblocks', t: "Club Cuadrado", u: "https://www.dropbox.com/scl/fi/db5y2w7majxk32wqvn4uz/Club-Cuadrado-_-Dibujos-animados-de-matem-ticas-para-ni-os-123-_-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=0fxw7irhacqp5slx932b9fned&raw=1", i: "fa-square-full", type: "icon" },
+        { cat: 'numberblocks', t: "Club Arcoiris", u: "https://www.dropbox.com/scl/fi/b4qu2m2bdlplio003uw7e/Club-Arcoiris_-N-meros-coloridos-para-Ni-os-_-Aprende-a-contar-123-_-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=mran8kuowk7lbyekta8bppjzy&raw=1", i: "fa-rainbow", type: "icon" },
+
+        // Kids Learning & Inglés
+        { cat: 'kidslearning', t: "Útiles Escolares en Inglés", u: "https://www.dropbox.com/scl/fi/c0r890n8pyc3n8apdspzx/tiles-Escolares-en-Ingl-s-_-Ingl-s-Para-Ni-os-720P_HD.mp4?rlkey=w41glmwz35qy186q135uxh30z&raw=1", i: "fa-pencil-ruler", tag: "Inglés", type: "icon" },
+        { cat: 'kidslearning', t: "Números acabados en 9", u: "https://www.dropbox.com/scl/fi/q3cbf1tm2qy2ck1bc7mfi/Numeros-acabados-en-9-Club-0-9-_-Aprende-a-contar-Numberblocks-en-Espa-ol-720P_HD.mp4?rlkey=zju89q0f2edx2133rsxlc8iq5&raw=1", i: "fa-list-ol", tag: "Numberblocks", type: "icon" },
+        { cat: 'kidslearning', t: "Medios de Transporte", u: "https://www.dropbox.com/scl/fi/2ilql33nn52jsax3mrlrs/MEDIOS-DE-TRANSPORTE-en-Ingl-s-y-Espa-ol-_-Ingl-s-Para-Ni-os-720P_HD.mp4?rlkey=uihw3xpfxpcyv9m1gcsntmm2o&raw=1", i: "fa-bus", tag: "Inglés", type: "icon" },
+        { cat: 'kidslearning', t: "Números Inglés 1-100", u: "https://www.dropbox.com/scl/fi/w4bghclrhkklcmwyuwmag/Los-N-meros-en-Ingl-s-del-1-al-100-_-Contar-hasta-el-100-en-Ingl-s-720P_HD.mp4?rlkey=qjyue3bu4vqvwvldz3umaxcp9&raw=1", i: "fa-sort-numeric-up", tag: "Inglés", type: "icon" },
+        { cat: 'kidslearning', t: "La Familia en Inglés", u: "https://www.dropbox.com/scl/fi/wdbi8sy4v1k6vy4sqklvh/La-Familia-en-Ingl-s-_-Miembros-de-La-Familia-en-Ingl-s-720P_HD.mp4?rlkey=gcslhr3wmcosnp0we6seh85h3&raw=1", i: "fa-users", tag: "Inglés", type: "icon" },
+        { cat: 'kidslearning', t: "Partes de la Escuela", u: "https://www.dropbox.com/scl/fi/88yw4km7hvmq96q1pgdxa/INGL-S-PARA-NI-OS-_-PARTES-DE-LA-ESCUELA-EN-INGL-S-_-APRENDER-INGL-S-720P_HD.mp4?rlkey=v26503rfqcfbhb14qn6aae6ac&raw=1", i: "fa-school", tag: "Inglés", type: "icon" }
+    ];
+
+    const container = document.getElementById('content-sections');
+    const player = document.getElementById('mainPlayer');
+    const titleDisplay = document.getElementById('displayTitle');
+    let currentIdx = -1;
+
+    function renderContent(filter = 'all') {
+        container.innerHTML = '';
+        
+        const categories = [
+            { id: 'grizzy', title: '🐻 Grizzy & The Lemmings Vol. 2' },
+            { id: 'larva', title: '🐛 Larva & Oscar - Películas y Capítulos' },
+            { id: 'phineas', title: '⚙️ Phineas y Ferb - Canciones y Película' },
+            { id: 'numberblocks', title: '🔢 Numberblocks - Matemáticas' },
+            { id: 'kidslearning', title: '📚 Kids Learning TV & Inglés' }
+        ];
+
+        categories.forEach(cat => {
+            if (filter !== 'all' && filter !== cat.id) return;
+            
+            const catVideos = allContent.filter(v => v.cat === cat.id);
+            if (catVideos.length === 0) return;
+
+            const sectionDiv = document.createElement('div');
+            sectionDiv.innerHTML = `<div class="section-header">${cat.title}</div>`;
+            
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+
+            catVideos.forEach((v) => {
+                const globalIndex = allContent.indexOf(v);
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                let mediaHtml = v.type === 'img' 
+                    ? `<img src="${v.img}" alt="${v.t}">` 
+                    : `<div class="card-icon"><i class="fas ${v.i}"></i></div>`;
+
+                let tagHtml = v.tag ? `<span class="tag">${v.tag}</span>` : '';
+
+                card.innerHTML = `
+                    ${mediaHtml}
+                    <div class="card-info">
+                        <div class="card-title">${v.t}</div>
+                        ${tagHtml}
+                    </div>
+                `;
+                card.onclick = () => playVideo(globalIndex);
+                gridDiv.appendChild(card);
+            });
+
+            sectionDiv.appendChild(gridDiv);
+            container.appendChild(sectionDiv);
+        });
+    }
+
+    function filterCategory(cat) {
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        renderContent(cat);
+    }
+
+    function playVideo(index) {
+        currentIdx = index;
+        const item = allContent[index];
+        player.src = item.u;
+        player.play();
+        titleDisplay.innerText = "Reproduciendo: " + item.t;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    player.onended = () => {
+        if (currentIdx + 1 < allContent.length) {
+            playVideo(currentIdx + 1);
+        }
+    };
+
+    // Inicializar vista completa
+    renderContent('all');
+</script>
+
+</body>
+</html>
