@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube - Milenio4K</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#141414;color:#fff;font-family:Arial,Helvetica,sans-serif}
+header{position:sticky;top:0;z-index:10;height:64px;display:flex;align-items:center;padding:0 18px;background:linear-gradient(to bottom,#111,#080808);border-bottom:1px solid #292929}
+.back{background:#e50914;color:#fff;border:0;border-radius:7px;padding:10px 15px;font-weight:bold;cursor:pointer}
+.title{margin-left:16px;font-size:20px;font-weight:bold}
+.brand{margin-left:auto;color:#e50914;font-weight:bold}
+main{padding:22px 20px 40px;max-width:1250px;margin:auto}
+.search{display:flex;gap:10px;margin-bottom:25px}
+.search input{flex:1;padding:13px 15px;border:1px solid #333;border-radius:7px;background:#222;color:#fff;font-size:16px;outline:none}
+.search button{background:#e50914;color:#fff;border:0;border-radius:7px;padding:0 20px;font-weight:bold;cursor:pointer}
+h1{font-size:24px;margin-bottom:18px}
+.player{display:none;background:#000;border-radius:9px;overflow:hidden;margin-bottom:28px;box-shadow:0 5px 25px #000}
+.player iframe{display:block;width:100%;aspect-ratio:16/9;border:0}
+.player-top{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#1d1d1d}
+.close{background:#333;color:#fff;border:0;border-radius:5px;padding:7px 11px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
+.card{background:#232323;border-radius:8px;overflow:hidden;color:#fff;transition:.25s;cursor:pointer}
+.card:hover{transform:scale(1.03)}
+.thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;display:block}
+.card-info{padding:10px 11px;font-size:14px;font-weight:bold;line-height:1.35}
+.note{color:#999;font-size:13px;margin-top:25px;line-height:1.5}
+@media(max-width:600px){main{padding:16px 12px 30px}.title{font-size:16px;margin-left:10px}.brand{font-size:14px}.search button{padding:0 14px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card-info{font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+<button class="back" onclick="volver()">← Volver</button>
+<div class="title">YouTube</div>
+<div class="brand">MILENIO4K</div>
+</header>
+<main>
+<div class="search">
+<input id="busqueda" type="search" placeholder="Buscar en YouTube..." onkeydown="tecla(event)">
+<button onclick="buscar()">Buscar</button>
+</div>
+<h1>🎬 YouTube</h1>
+<section id="player" class="player">
+<div class="player-top"><strong id="playerTitle">Reproduciendo</strong><button class="close" onclick="cerrarPlayer()">Cerrar</button></div>
+<iframe id="video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+</section>
+<div id="grid" class="grid"></div>
+<p class="note">Los videos se reproducen mediante el reproductor oficial de YouTube.</p>
+</main>
+<script>
+function volver(){if(history.length>1)history.back();else location.href="index.html";}
+function tecla(e){if(e.key==="Enter")buscar();}
+function buscar(){const q=document.getElementById("busqueda").value.trim();if(q)window.open("https://www.youtube.com/results?search_query="+encodeURIComponent(q),"_blank");}
+const videos=[{id:"dQw4w9WgXcQ",titulo:"Video de ejemplo de YouTube"}];
+const grid=document.getElementById("grid");
+videos.forEach(v=>{
+ const card=document.createElement("div");card.className="card";card.onclick=()=>reproducir(v.id,v.titulo);
+ card.innerHTML='<img class="thumb" src="https://i.ytimg.com/vi/'+encodeURIComponent(v.id)+'/hqdefault.jpg" alt=""><div class="card-info">'+v.titulo+'</div>';
+ grid.appendChild(card);
+});
+function reproducir(id,titulo){document.getElementById("playerTitle").textContent=titulo;document.getElementById("video").src="https://www.youtube.com/embed/"+encodeURIComponent(id)+"?autoplay=1&rel=0";document.getElementById("player").style.display="block";window.scrollTo({top:0,behavior:"smooth"});}
+function cerrarPlayer(){document.getElementById("video").src="";document.getElementById("player").style.display="none";}
+</script>
+</body>
+</html>
